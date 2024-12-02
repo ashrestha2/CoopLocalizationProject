@@ -73,7 +73,54 @@ Dnom = zeros(5, 6);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% 2) DT Linearized Model
 
+% testing nominal iterations
+time_steps = 0:0.1:100;
+%%% trying nomial again 
+theta_g = theta_g0;
+theta_a = theta_a0;
+nom_east_g(:,1) = xi_g0;
+nom_north_g(:,1) = eta_g0;
+nom_theta_g(:,1) = theta_g0;
+nom_east_a(:,1) = xi_a0;
+nom_north_a(:,1) = eta_a0;
+nom_theta_a(:,1) = theta_a0;
+for nom_step = 1:length(time_steps)-1
+    nom_east_g(:,nom_step+1) = v_g0*cos(theta_g)*(deltaT*nom_step);
+    nom_north_g(:,nom_step+1) = v_g0*sin(theta_g)*(deltaT*nom_step);
+    nom_theta_g(:,nom_step+1) = wrapToPi( v_g0/L * tan(phi_g0) * (deltaT*nom_step)) ;
+    nom_east_a(:,nom_step+1) = v_a0*cos(theta_a)*(deltaT*nom_step);
+    nom_north_a(:,nom_step+1) = v_a0*sin(theta_a)*(deltaT*nom_step);
+    nom_theta_a(:,nom_step+1) = wrapToPi( w_a0 * (deltaT*nom_step)) ;
 
+    theta_a = nom_theta_a(:,nom_step);
+    theta_g = nom_theta_g(:,nom_step);
+end
+x_nom_test = [nom_east_g, nom_north_g, nom_theta_g, nom_east_a, nom_north_a, nom_theta_a];
+
+figure(); hold on;
+plot(nom_east_g,nom_north_g,'b')
+plot(nom_east_a,nom_north_a,'r')
+plot(nom_east_g(:,1),nom_north_g(:,1),'go')
+plot(nom_east_a(:,1),nom_north_a(:,1),'go')
+xlabel('e')
+ylabel('n')
+
+figure(); hold on;
+subplot(3,2,1); hold on
+plot(time_steps,nom_east_g)
+subplot(3,2,2); hold on
+plot(time_steps,nom_east_a)
+subplot(3,2,3); hold on
+plot(time_steps,nom_north_g)
+subplot(3,2,4); hold on
+plot(time_steps,nom_north_a)
+subplot(3,2,5); hold on
+plot(time_steps,nom_theta_g)
+subplot(3,2,6); hold on
+plot(time_steps,nom_theta_a)
+
+
+%%
 %%% assume we have F, G, H, M 
 % initial perturbations -- CHANGE LATER 
 del_east_g0 = 0;
@@ -120,6 +167,27 @@ x_nom(:,1) = x_nom_0;
 for nom_iter = 1:length(time_steps)
     x_nom(:,nom_iter+1) = F_nom * x_nom(:,nom_iter);
 end
+figure(); hold on;
+plot(x_nom(:,1),x_nom(:,2),'b')
+plot(x_nom(:,4),x_nom(:,5),'r')
+xlabel('e')
+ylabel('n')
+
+%%% trying nomial again 
+theta_g = theta_g0;
+theta_a = theta_a0;
+for nom_step = 1:length(time_steps)
+    nom_east_g(:,nom_step) = v_g0*cos(theta_g)*deltaT;
+    nom_north_g(:,nom_step) = v_g0*sin(theta_g)*deltaT;
+    nom_theta_g(:,nom_step) = v_g0/L * tan(phi_g0) * deltaT;
+    nom_east_a(:,nom_step) = v_a0*cos(theta_a)*deltaT;
+    nom_north_a(:,nom_step) = v_a0*sin(theta_a)*deltaT;
+    nom_theta_a(:,nom_step) = w_a0 * deltaT;
+
+    theta_a = nom_theta_a(:,nom_step);
+    theta_g = nom_theta_g(:,nom_step);
+end
+x_nom_test = [nom_east_g, nom_north_g, nom_theta_g, nom_east_a, nom_north_a, nom_theta_a];
 
 % full x = nom + perturbations
 x_linear = x_nom + del_x;
@@ -138,7 +206,7 @@ for j = 1:n
 end
 xlabel('Time (secs)')
 sgtitle('States vs Time, Full Linearized Dynamics Simulation')
-
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% 3) Comparison of DT and Non-linear Simulations
 % Initial conditions
@@ -164,6 +232,24 @@ for i = 1:n
     ylabel(var{i},'Interpreter','latex')
 end
 sgtitle('States vs Time, Full Nonlinear Dynamics Simulation')
+
+
+% figure(); hold on;
+% plot(X(:,1),X(:,2),'b')
+% plot(X(:,4),X(:,5),'r')
+figure(); hold on;
+subplot(3,2,1); hold on
+plot(t,X(:,1))
+subplot(3,2,2)
+plot(t,X(:,4))
+subplot(3,2,3)
+plot(t,X(:,2))
+subplot(3,2,4)
+plot(t,X(:,5))
+subplot(3,2,5)
+plot(t,wrapToPi(X(:,3)))
+subplot(3,2,6)
+plot(t,wrapToPi(X(:,6)))
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
 
