@@ -32,18 +32,18 @@ Anom = [
     0, 0, -v_g0 * sin(theta_g0), 0, 0, 0;
     0, 0,  v_g0 * cos(theta_g0), 0, 0, 0;
     0, 0,  0,                  0, 0, 0;
-    0, 0,  0,                  0, -v_a0 * sin(theta_a0), 0;
-    0, 0,  0,                  0,  v_a0 * cos(theta_a0), 0;
+    0, 0,  0,                  0, 0, -v_a0 * sin(theta_a0);
+    0, 0,  0,                  0, 0, v_a0 * cos(theta_a0);
     0, 0,  0,                  0,  0, 0
 ];
 
 Bnom = [
-    cos(theta_g0), 0,               0, 0;
-    sin(theta_g0), 0,               0, 0;
-    tan(phi_g0)/L, 0, v_g0/(L*cos(phi_g0)^2), 0;
-    0, cos(theta_a0),               0, 0;
-    0, sin(theta_a0),               0, 0;
-    0, 0,                          0, 1
+    cos(theta_g0), 0, 0, 0;
+    sin(theta_g0), 0, 0, 0;
+    tan(phi_g0)/L, 0, v_g0/(L*sec(phi_g0)^2), 0;
+    0, 0, cos(theta_a0), 0;
+    0, 0, sin(theta_a0), 0;
+    0, 0, 0, 1
 ];
 
 Gammanom = [
@@ -55,20 +55,7 @@ Gammanom = [
     0, 0, 0, 0, 0, 1
 ];
 
-Cnom = [
-    (eta_a0 - eta_g0) / ((xi_a0 - xi_g0)^2 + (eta_a0 - eta_g0)^2), ...
-   -(xi_a0 - xi_g0) / ((xi_a0 - xi_g0)^2 + (eta_a0 - eta_g0)^2), 0, 0, 0, 0;
-   -(eta_a0 - eta_g0) / ((xi_a0 - xi_g0)^2 + (eta_a0 - eta_g0)^2), ...
-   -(xi_g0 - xi_a0) / ((xi_g0 - xi_a0)^2 + (eta_g0 - eta_a0)^2), ...
-    (eta_g0 - eta_a0) / ((xi_g0 - xi_a0)^2 + (eta_g0 - eta_a0)^2), 0, 0, 0;
-   -(xi_a0 - xi_g0) / ((xi_a0 - xi_g0)^2 + (eta_a0 - eta_g0)^2), ...
-    (xi_g0 - xi_a0) / ((xi_g0 - xi_a0)^2 + (eta_g0 - eta_a0)^2), ...
-   -(xi_g0 - xi_a0) / ((xi_g0 - xi_a0)^2 + (eta_g0 - eta_a0)^2), 0, 0, 0;
-    0, 0, 0, -1, 0, 0;
-    0, 0, 0,  0, 1, 0
-];
-
-Dnom = zeros(5, 6);
+Dnom = zeros(5,6);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2) DT Linearized Model
@@ -234,5 +221,7 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 %%% 4) Implement and tune KF
 
 load("cooplocalization_finalproj_KFdata.mat")
+
+
 
 % a) 

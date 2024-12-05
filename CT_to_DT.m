@@ -48,13 +48,13 @@ H = C;
 M = D;
 
 % Display results
-disp('Discrete-time F matrix:');
-disp(F);
-disp('Discrete-time G matrix:');
-disp(G);
-disp('Discrete-time H matrix:');
-disp(H);
-disp('Discrete-time M matrix:');
-disp(M);
+% disp('Discrete-time F matrix:');
+% disp(F);
+% disp('Discrete-time G matrix:');
+% disp(G);
+% disp('Discrete-time H matrix:');
+% disp(H);
+% disp('Discrete-time M matrix:');
+% disp(M);
 
 end
