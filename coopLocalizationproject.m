@@ -197,6 +197,37 @@ end
 xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation','Interpreter','latex')
 
+% Calculating error
+error_x = x_linear - X;
+error_y = y_linear - Y;
+
+n = length(x0);
+var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
+figure
+for i = 1:n
+    subplot(n,1,i)
+    plot(t,error_x(:,i),'g',LineWidth=1.2)
+    if i == 3 || i == 6
+        plot(t,wrapToPi(error_x(:,i)),'g',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States Error vs Time','Interpreter','latex')
+
+p = min(size(y_nom));
+var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
+figure();
+for i = 1:p
+    subplot(p,1,i)
+    plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
+    if i == 1 || i == 3
+        plot(t(2:end),wrapToPi(error_y(i,:)),'g',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
 
