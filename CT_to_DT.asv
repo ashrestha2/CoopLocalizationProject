@@ -1,12 +1,4 @@
-function [F,G,H,M] = CT_to_DT(x_nom)
-
-% NOminal System Parameters
-L = 0.5; % Vehicle length (m)
-vg = 2; % Ground vehicle speed (m/s)
-va = 12; % Aerial vehicle speed (m/s)
-phi_g = -pi/18; % Steering angle (rad)
-omega_a = pi/25; % Angular rate (rad/s)
-dt = 0.1; % Sampling time (s)
+function [F,G,H,M] = CT_to_DT(x_nom,L,vg,va,phi_g,omega_a,dt)
 
 % ABCD CT matrices 
 A = [
@@ -57,5 +49,9 @@ M = sys_dt.D;
 % disp(H);
 % disp('Discrete-time M matrix:');
 % disp(M);
+
+F = eye(length(A)) + deltaT * A;
+G = deltaT * B;
+H = C
 
 end

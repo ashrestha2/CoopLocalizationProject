@@ -130,8 +130,8 @@ for j = 1:n
     end
     ylabel(var{j},'Interpreter','latex')
 end
-xlabel('Time (secs)')
-sgtitle('States vs Time, Full Linearized Dynamics Simulation')
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States vs Time, Full Linearized Dynamics Simulation','Interpreter','latex')
 
 % find the nominal measurements 
 y_nom = findYnom(x_nom(2:end,:));
@@ -150,8 +150,8 @@ for j = 1:p
     end
     ylabel(var{j},'Interpreter','latex')
 end
-xlabel('Time (secs)')
-sgtitle('Measurements vs Time, Full Linearized Dynamics Simulation')
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements vs Time, Full Linearized Dynamics Simulation','Interpreter','latex')
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -180,8 +180,8 @@ for i = 1:n
     end
     ylabel(var{i},'Interpreter','latex')
 end
-xlabel('Time (secs)')
-sgtitle('States vs Time, Full Nonlinear Dynamics Simulation')
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States vs Time, Full Nonlinear Dynamics Simulation','Interpreter','latex')
 
 p = min(size(y_nom));
 var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
@@ -194,8 +194,8 @@ for i = 1:p
     end
     ylabel(var{i},'Interpreter','latex')
 end
-xlabel('Time (secs)')
-sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation')
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation','Interpreter','latex')
 
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
