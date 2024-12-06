@@ -222,6 +222,15 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 load("cooplocalization_finalproj_KFdata.mat")
 
+% make a struct for constants
+const.L = 0.5; % length of UGV [m]
+const.deltaT = 0.1; % time interval
+%UGV
+const.v_g0 = 2; % linear velocity [m/s]
+const.phi_g0 = -pi/18; % steering angle [rad]
+%UAV
+const.v_a0 = 12; % linear velocity [m/s]
+const.w_a0 = pi/25; % angluar rate [rad/s]
 
 
 % a) 

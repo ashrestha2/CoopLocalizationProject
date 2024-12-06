@@ -1,4 +1,4 @@
-function [F,G,H,M] = CT_to_DT(x_nom,L,vg,va,phi_g,omega_a,dt)
+function [F,G,H,M,Omega] = CT_to_DT(x_nom,L,vg,va,phi_g,omega_a,dt)
 
 % ABCD CT matrices 
 A = [
@@ -28,6 +28,8 @@ C = [(x_nom(5) - x_nom(2))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2), 
 
 D = zeros(size(C, 1), size(B, 2)); 
 
+Gamma = eye(6,6);
+
 % % Old code -- not sure if this does the same as the euler approx
 % % Create continuous-time state-space model
 % sys_ct = ss(A, B, C, D);
@@ -46,6 +48,7 @@ F = eye(length(A)) + dt * A;
 G = dt * B;
 H = C;
 M = D;
+Omega = deltaT * Gamma;
 
 % Display results
 % disp('Discrete-time F matrix:');
