@@ -1,4 +1,4 @@
-function [xdot] = ugvEOM(t,x,u,L)
+function [xdot] = ugvEOM(t,x,u,w,L)
     xi_g = x(1);
     eta_g = x(2);
     theta_g = x(3);
@@ -11,13 +11,20 @@ function [xdot] = ugvEOM(t,x,u,L)
     v_a = u(3);
     w_a = u(4);
 
-    xi_g_dot = v_g*cos(theta_g);
-    eta_g_dot = v_g*sin(theta_g);
-    theta_g_dot = (v_g/L)*tan(phi_g);
+    w_xg = w(1);
+    w_yg = w(2);
+    w_wg = w(3);
+    w_xa = w(4);
+    w_ya = w(5);
+    w_wa = w(6);
 
-    xi_a_dot = v_a*cos(theta_a);
-    eta_a_dot = v_a*sin(theta_a);
-    theta_a_dot = w_a;
+    xi_g_dot = v_g*cos(theta_g) + w_xg;
+    eta_g_dot = v_g*sin(theta_g) + w_yg;
+    theta_g_dot = (v_g/L)*tan(phi_g) + w_wg;
+
+    xi_a_dot = v_a*cos(theta_a) + w_xa;
+    eta_a_dot = v_a*sin(theta_a) + w_ya;
+    theta_a_dot = w_a + w_wa;
 
     xdot = [xi_g_dot;eta_g_dot;theta_g_dot;xi_a_dot;eta_a_dot;theta_a_dot];
 end
