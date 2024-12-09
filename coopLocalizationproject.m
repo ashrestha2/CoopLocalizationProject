@@ -1,6 +1,6 @@
 %% ASEN 5044 PROJECT: COOP LOCALIZATION
 % Authors: Ananya Shrestha, Maggie Wussow, Cara Spencer
-% Last Updated: 12/3/2024
+% Last Updated: 12/7/2024
 
 %% Part 1: DETERMINISTIC SYSTEM ANALYSIS
 %%% housekeeping
@@ -12,7 +12,7 @@ close all
 L = 0.5; % length of UGV [m]
 deltaT = 0.1; % time interval
 
-% Nominal conditions
+% Initial nominal conditions
 %   UGV
 xi_g0 = 10; % east position [m]
 eta_g0 = 0; % north position [m]
@@ -26,24 +26,52 @@ theta_a0 = -pi/2; % heading angle [m]
 v_a0 = 12; % linear velocity [m/s]
 w_a0 = pi/25; % angluar rate [rad/s]
 
-%%% 1) CT Linearized Model
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 1) CT Linearized Model
+syms eta_g xi_g theta_g v_g phi_g eta_a xi_a theta_a v_a w_a
 Anom = [
-    0, 0, -v_g0 * sin(theta_g0), 0, 0, 0;
-    0, 0,  v_g0 * cos(theta_g0), 0, 0, 0;
+    0, 0, -v_g * sin(theta_g), 0, 0, 0;
+    0, 0,  v_g * cos(theta_g), 0, 0, 0;
     0, 0,  0,                  0, 0, 0;
-    0, 0,  0,                  0, 0, -v_a0 * sin(theta_a0);
-    0, 0,  0,                  0, 0, v_a0 * cos(theta_a0);
+    0, 0,  0,                  0, 0, -v_a * sin(theta_a);
+    0, 0,  0,                  0, 0, v_a * cos(theta_a);
     0, 0,  0,                  0,  0, 0
 ];
 
 Bnom = [
-    cos(theta_g0), 0, 0, 0;
-    sin(theta_g0), 0, 0, 0;
-    tan(phi_g0)/L, 0, v_g0/(L*sec(phi_g0)^2), 0;
-    0, 0, cos(theta_a0), 0;
-    0, 0, sin(theta_a0), 0;
+    cos(theta_g), 0, 0, 0;
+    sin(theta_g), 0, 0, 0;
+    tan(phi_g)/L, 0, v_g/(L*sec(phi_g)^2), 0;
+    0, 0, cos(theta_a), 0;
+    0, 0, sin(theta_a), 0;
     0, 0, 0, 1
+];
+
+C = [ 
+    (eta_a - eta_g) / ((xi_a - xi_g)^2 + (eta_a - eta_g)^2), ...
+    -(xi_a - xi_g) / ((xi_a - xi_g)^2 + (eta_a - eta_g)^2), ...
+    -1, ...
+    -(eta_a - eta_g) / ((xi_a - xi_g)^2 + (eta_a - eta_g)^2), ...
+    (xi_a - xi_g) / ((xi_a - xi_g)^2 + (eta_a - eta_g)^2), ...
+    0;
+
+    (xi_g - xi_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    (eta_g - eta_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    0, ...
+    -(xi_g - xi_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    (xi_g - xi_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    0;
+
+    -(eta_g - eta_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    (xi_g - xi_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    -(xi_g - xi_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    (eta_g - eta_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    (xi_g - xi_a) / ((xi_g - xi_a)^2 + (eta_g - eta_a)^2), ...
+    -1;
+
+    0, 0, 0, 1, 0, 0;
+
+    0, 0, 0, 0, 1, 0
 ];
 
 Gammanom = [
@@ -86,8 +114,8 @@ x0 = [xi_g0;eta_g0;theta_g0;xi_a0;eta_a0;theta_a0];
 
 %initial perturbation
 perturb_x0 = [0;1;0;0;0;0.1];
+del_x(:,1) = perturb_x0;
 
- del_x(:,1) = perturb_x0;
 % run through linearized perturbation iterations 
 for lin_iter = 1:length(time_steps)-1
     % pull the F,G,H,M matricies solved at a different nominal point
@@ -146,12 +174,13 @@ sgtitle('Measurements vs Time, Full Linearized Dynamics Simulation','Interpreter
 % Initial conditions
 x0 = [xi_g0;eta_g0;theta_g0;xi_a0;eta_a0;theta_a0];
 u = [v_g0;phi_g0;v_a0;w_a0];
+w = [0;0;0;0;0;0];
 perturb_x0 = [0;1;0;0;0;0.1];
 
 % Non-linear Simulation
 t_int = 0:deltaT:100;
 options = odeset('RelTol',1E-12,'AbsTol',1E-12);
-[t,X] = ode45(@(t,x) ugvEOM(t,x,u,L),t_int,x0+perturb_x0,options); 
+[t,X] = ode45(@(t,x) ugvEOM(t,x,u,w,L),t_int,x0+perturb_x0,options); 
 
 % Non-linear Measurement Simulation
 Y = findYnom(X(2:end,:));
@@ -279,5 +308,39 @@ for j = 1:p
 end
 xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements vs Time, LKF Simulation','Interpreter','latex')
+const.x0 = x0;
+
+% a) 
+
+%%% Verifying TMT
+% [tmont,Xmont,Ymont] = TMTSim(const,Qtrue,Rtrue);
+% 
+% var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
+% figure
+% for i = 1:n
+%     subplot(n,1,i)
+%     plot(tmont,Xmont(:,i),'r',LineWidth=1.2)
+%     if i == 3 || i == 6
+%         plot(tmont,wrapToPi(Xmont(:,i)),'r',LineWidth=1.2)
+%     end
+%     ylabel(var{i},'Interpreter','latex')
+% end
+% xlabel('Time (secs)','Interpreter','latex')
+% sgtitle('States vs Time, Monte Carlo Simulation','Interpreter','latex')
+% 
+% p = min(size(y_nom));
+% var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
+% figure();
+% for i = 1:p
+%     subplot(p,1,i)
+%     plot(tmont(2:end),Ymont(i,:),'r',LineWidth=1.2)
+%     if i == 1 || i == 3
+%         plot(tmont(2:end),wrapToPi(Ymont(i,:)),'r',LineWidth=1.2)
+%     end
+%     ylabel(var{i},'Interpreter','latex')
+% end
+% xlabel('Time (secs)','Interpreter','latex')
+% sgtitle('Measurements vs Time, Monte Carlo Simulation','Interpreter','latex')
+
 
 
