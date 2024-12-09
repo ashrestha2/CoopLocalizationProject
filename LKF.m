@@ -22,6 +22,8 @@ function [x_plus_full, P_plus, innovation, y_calc_full] = LKF(del_x0, P0, const,
 %   innovation??/?
 %   
 
+    Q = Q * 1000; 
+
     % initialize P(+) and del_x(+) 
     del_x_plus(:,1) = del_x0;
     P_plus(:,:,1) = P0;
@@ -34,7 +36,7 @@ function [x_plus_full, P_plus, innovation, y_calc_full] = LKF(del_x0, P0, const,
     I = eye(n);
 
     % running through the loop for every time step 
-    for k = 1:T-1 %k = time step
+    for k = 1:T %k = time step
         [F_tilde,G_tilde,H_tilde,M_tilde,omega_tilde] = DT_mat_func(x_nom,const.L,const.v_g0,const.v_a0,const.phi_g0,const.w_a0,const.deltaT);
 
         %%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,7 +53,7 @@ function [x_plus_full, P_plus, innovation, y_calc_full] = LKF(del_x0, P0, const,
     
         %%%%%%%%%%%%%%%%%%%%%%%
         %%% correction step 
-        del_y_meas(:,k) = y_meas(:,k+1) - y_nom(:,k); % y_meas given to us in mat file y_nom thru findYnom func with x_nom
+        del_y_meas(:,k) = y_meas(:,k) - y_nom(:,k); % y_meas given to us in mat file y_nom thru findYnom func with x_nom
         del_x_plus(:,k+1) = del_x_minus(:,k+1) + K(:,:,k+1) * (del_y_meas(:,k) - (H_tilde * del_x_minus(:,k+1)));
         P_plus(:,:,k+1) = (I - K(:,:,k+1) * H_tilde) * P_minus;
         del_y_calc(:,k) = H_tilde * del_x_plus(:,k+1) + M_tilde * del_u(:,k);

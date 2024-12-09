@@ -270,15 +270,13 @@ del_x0 = [0;1;0;0;0;0.1];
 P0 = 1000 * eye(length(del_x0));
 % y_nom = findYnom(x_nom);
 T = length(ydata);
-LKF_time = 1:T;
+LKF_time = 0:1000;
 
-% MC
-
-
+% get noisy measurements and proces s
 [time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue);
-
 % run LKF
-[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_noisy, y_noisy, ydata, Qtrue, Rtrue);
+[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
+
 
 % plotting 
 n = length(del_x0);
