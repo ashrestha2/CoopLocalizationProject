@@ -1,34 +1,45 @@
-% Initialize parameters
+% Initialization
 dt = 0.1; % Sampling time
 N = 1000; % Number of time steps
 MC_runs = 100; % Number of Monte Carlo simulations
 
-% Initial state and covariance
-x0 = [10; 0; pi/2; -60; 0; -pi/2]; % True initial state
-x_hat = x0 + 0.1 * randn(6, 1); % Initial state estimate
-P = eye(6); % Initial covariance
+% Load initial parameters from prog_report_1
+x0 = [10; 0; pi/2; -60; 0; -pi/2]; % Initial state
+u_nom = [2; -pi/18; 12; pi/25]; % Control inputs
 
-% Noise covariances
+% Process and measurement noise covariances
 Q_EKF = diag([0.01, 0.01, 0.01, 0.01, 0.01, 0.01]);
 R_EKF = diag([0.05, 0.1, 0.05, 0.01, 0.01]);
 
-% Monte Carlo simulation
+
+% Monte Carlo Simulations
 for mc = 1:MC_runs
-    % Simulate true trajectory
-    [x_true, y_meas] = simulate_trajectory(x0, Q_EKF, R_EKF, dt, N);
+    % Generate nominal trajectory and noisy ground truth
+    [t, x_nom] = FindNominal(x0, u_nom, dt, N); % Nominal trajectory
+    w = mvnrnd(zeros(6, 1), Q_EKF, N)'; % Process noise
+    x_true = x_nom + w; % Noisy ground truth trajectory
     
-    % EKF loop
+    % Generate noisy measurements
+    y_nom = findYnom(x_nom); % Nominal measurements
+    v = mvnrnd(zeros(5, 1), R_EKF, N)'; % Measurement noise
+    y_meas = y_nom + v; % Noisy measurements
+    
+    % EKF Initialization
+    x_hat = x0; % Initial state estimate
+    P = eye(6); % Initial covariance
+    
+    % EKF Loop
     for k = 1:N
-        % Prediction step
-        [x_hat_pred, F] = predict_state(x_hat, u_nom, dt);
-        P_pred = F * P * F' + Q_EKF;
+        % Prediction Step
+        [x_hat_pred, F] = ugvEOM(x_hat, u_nom, dt); % Predict state and Jacobian
+        P_pred = F * P * F' + Q_EKF; % Predict covariance
         
-        % Update step
-        [y_pred, H] = predict_measurement(x_hat_pred);
-        S = H * P_pred * H' + R_EKF;
-        K = P_pred * H' / S;
-        x_hat = x_hat_pred + K * (y_meas(:, k) - y_pred);
-        P = (eye(6) - K * H) * P_pred;
+        % Measurement Update
+        [y_pred, H] = findYnom(x_hat_pred); % Predicted measurement and Jacobian
+        S = H * P_pred * H' + R_EKF; % Innovation covariance
+        K = P_pred * H' / S; % Kalman gain
+        x_hat = x_hat_pred + K * (y_meas(:, k) - y_pred); % Update state
+        P = (eye(6) - K * H) * P_pred; % Update covariance
         
     end
 end
