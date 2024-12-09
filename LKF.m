@@ -1,4 +1,4 @@
-function [x_plus, P_plus, innovation] = LKF(del_x0, P0, const, DT_mat_func, x_nom, y_nom, u_nom, y_meas, Q, R)
+function [del_x_plus, P_plus, innovation, del_y_calc] = LKF(del_x0, P0, const, DT_mat_func, x_nom, y_nom, y_meas, Q, R)
 
 %%% Kalman Filter Function 
 % Inputs: 
@@ -35,12 +35,12 @@ function [x_plus, P_plus, innovation] = LKF(del_x0, P0, const, DT_mat_func, x_no
     I = eye(n);
 
     % running through the loop for every time step 
-    for k = 1:T %k = time step
-        [F_tilde,G_tilde,H_tilde,M_tilde,omega_tilde] = DT_matricies_func(x_nom,const.L,const.vg0,const.va0,const.phi_g0,const.omega_a0,const.deltaT);
+    for k = 1:T-1 %k = time step
+        [F_tilde,G_tilde,H_tilde,M_tilde,omega_tilde] = DT_mat_func(x_nom,const.L,const.v_g0,const.v_a0,const.phi_g0,const.w_a0,const.deltaT);
 
         %%%%%%%%%%%%%%%%%%%%%%%%
         %%% prediction step section 
-        del_u(:,k) = u(:,k+1) - u_nom(:,k+1); %WHERE THE HECK DOES UK+1 COME FROM -- 0???
+        del_u(:,k) = zeros(4,1); %u(:,k+1) - u_nom(:,k+1); %WHERE THE HECK DOES UK+1 COME FROM -- 0???
         del_x_minus(:,k+1) = F_tilde * del_x_plus(:,k) + G_tilde * del_u(:,k);
         P_minus = F_tilde * P_plus(:,:,k) * F_tilde' + omega_tilde * Q * omega_tilde';
         innovation(:,:,k) = H_tilde*P_minus*H_tilde'+R;
@@ -52,10 +52,10 @@ function [x_plus, P_plus, innovation] = LKF(del_x0, P0, const, DT_mat_func, x_no
     
         %%%%%%%%%%%%%%%%%%%%%%%
         %%% correction step 
-        del_y_meas(:,k) = y_meas(:,k) - y_nom(:,k); % y_meas given to us in mat file y_nom thru findYnom func with x_nom
+        del_y_meas(:,k) = y_meas(:,k+1) - y_nom(:,k); % y_meas given to us in mat file y_nom thru findYnom func with x_nom
         del_x_plus(:,k+1) = del_x_minus(:,k+1) + K(:,:,k+1) * (del_y_meas(:,k) - (H_tilde * del_x_minus(:,k+1)));
         P_plus(:,:,k+1) = (I - K(:,:,k+1) * H_tilde) * P_minus;
-    
+        del_y_calc(:,k) = H_tilde * del_x_plus(:,k+1) + M_tilde * del_u(:,k);
     end
 
 end

@@ -48,7 +48,7 @@ F = eye(length(A)) + dt * A;
 G = dt * B;
 H = C;
 M = D;
-Omega = deltaT * Gamma;
+Omega = dt * Gamma;
 
 % Display results
 % disp('Discrete-time F matrix:');

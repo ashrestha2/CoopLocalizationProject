@@ -232,5 +232,52 @@ const.phi_g0 = -pi/18; % steering angle [rad]
 const.v_a0 = 12; % linear velocity [m/s]
 const.w_a0 = pi/25; % angluar rate [rad/s]
 
-
 % a) 
+
+%%% LKF 
+% IC 
+del_x0 = [0;1;0;0;0;0.1];
+P0 = 1000 * eye(length(del_x0));
+% y_nom = findYnom(x_nom);
+T = length(ydata);
+LKF_time = 1:T;
+
+% run LKF
+[del_x_plus, P_plus, innovation, del_y] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, ydata, Qtrue, Rtrue);
+
+% get the total state
+x_LKF_full = del_x_plus + x_nom';
+
+% get total y meaurements 
+y_LKF_total = del_y + y_nom;
+
+% plotting 
+n = length(del_x0);
+var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
+figure();
+for j = 1:n
+    subplot(n,1,j); hold on;
+    plot(LKF_time,x_LKF_full(j,:),'b',LineWidth=1.2)
+    if j == 3 || j == 6
+        plot(LKF_time,wrapToPi(x_LKF_full(j,:)),'b',LineWidth=1.2)
+    end
+    ylabel(var{j},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States vs Time, LKF Simulation','Interpreter','latex')
+
+p = min(size(y_nom));
+var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
+figure();
+for j = 1:p
+    subplot(p,1,j)
+    plot(LKF_time(2:end),y_LKF_total(j,:),'b',LineWidth=1.2)
+    if j == 1 || j == 3
+        plot(LKF_time(2:end),wrapToPi(y_LKF_total(j,:)),'b',LineWidth=1.2)
+    end
+    ylabel(var{j},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements vs Time, LKF Simulation','Interpreter','latex')
+
+

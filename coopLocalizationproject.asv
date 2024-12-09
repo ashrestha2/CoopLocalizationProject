@@ -32,18 +32,18 @@ Anom = [
     0, 0, -v_g0 * sin(theta_g0), 0, 0, 0;
     0, 0,  v_g0 * cos(theta_g0), 0, 0, 0;
     0, 0,  0,                  0, 0, 0;
-    0, 0,  0,                  0, -v_a0 * sin(theta_a0), 0;
-    0, 0,  0,                  0,  v_a0 * cos(theta_a0), 0;
+    0, 0,  0,                  0, 0, -v_a0 * sin(theta_a0);
+    0, 0,  0,                  0, 0, v_a0 * cos(theta_a0);
     0, 0,  0,                  0,  0, 0
 ];
 
 Bnom = [
-    cos(theta_g0), 0,               0, 0;
-    sin(theta_g0), 0,               0, 0;
-    tan(phi_g0)/L, 0, v_g0/(L*cos(phi_g0)^2), 0;
-    0, cos(theta_a0),               0, 0;
-    0, sin(theta_a0),               0, 0;
-    0, 0,                          0, 1
+    cos(theta_g0), 0, 0, 0;
+    sin(theta_g0), 0, 0, 0;
+    tan(phi_g0)/L, 0, v_g0/(L*sec(phi_g0)^2), 0;
+    0, 0, cos(theta_a0), 0;
+    0, 0, sin(theta_a0), 0;
+    0, 0, 0, 1
 ];
 
 Gammanom = [
@@ -55,20 +55,7 @@ Gammanom = [
     0, 0, 0, 0, 0, 1
 ];
 
-Cnom = [
-    (eta_a0 - eta_g0) / ((xi_a0 - xi_g0)^2 + (eta_a0 - eta_g0)^2), ...
-   -(xi_a0 - xi_g0) / ((xi_a0 - xi_g0)^2 + (eta_a0 - eta_g0)^2), 0, 0, 0, 0;
-   -(eta_a0 - eta_g0) / ((xi_a0 - xi_g0)^2 + (eta_a0 - eta_g0)^2), ...
-   -(xi_g0 - xi_a0) / ((xi_g0 - xi_a0)^2 + (eta_g0 - eta_a0)^2), ...
-    (eta_g0 - eta_a0) / ((xi_g0 - xi_a0)^2 + (eta_g0 - eta_a0)^2), 0, 0, 0;
-   -(xi_a0 - xi_g0) / ((xi_a0 - xi_g0)^2 + (eta_a0 - eta_g0)^2), ...
-    (xi_g0 - xi_a0) / ((xi_g0 - xi_a0)^2 + (eta_g0 - eta_a0)^2), ...
-   -(xi_g0 - xi_a0) / ((xi_g0 - xi_a0)^2 + (eta_g0 - eta_a0)^2), 0, 0, 0;
-    0, 0, 0, -1, 0, 0;
-    0, 0, 0,  0, 1, 0
-];
-
-Dnom = zeros(5, 6);
+Dnom = zeros(5,6);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2) DT Linearized Model
@@ -195,8 +182,39 @@ for i = 1:p
     ylabel(var{i},'Interpreter','latex')
 end
 xlabel('Time (secs)','Interpreter','latex')
-sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation')
+sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation','Interpreter','latex')
 
+% Calculating error
+error_x = x_linear - X;
+error_y = y_linear - Y;
+
+n = length(x0);
+var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
+figure
+for i = 1:n
+    subplot(n,1,i)
+    plot(t,error_x(:,i),'g',LineWidth=1.2)
+    if i == 3 || i == 6
+        plot(t,wrapToPi(error_x(:,i)),'g',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States Error vs Time','Interpreter','latex')
+
+p = min(size(y_nom));
+var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
+figure();
+for i = 1:p
+    subplot(p,1,i)
+    plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
+    if i == 1 || i == 3
+        plot(t(2:end),wrapToPi(error_y(i,:)),'g',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
 
@@ -204,4 +222,27 @@ sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation')
 
 load("cooplocalization_finalproj_KFdata.mat")
 
+% make a struct for constants
+const.L = 0.5; % length of UGV [m]
+const.deltaT = 0.1; % time interval
+%UGV
+const.v_g0 = 2; % linear velocity [m/s]
+const.phi_g0 = -pi/18; % steering angle [rad]
+%UAV
+const.v_a0 = 12; % linear velocity [m/s]
+const.w_a0 = pi/25; % angluar rate [rad/s]
+
+
 % a) 
+
+%%% LKF 
+% IC 
+del_x0 = [0;1;0;0;0;0.1];
+P0 = 1000 * eye(length(del_x0));
+
+y_nom()
+[x_plus, P_plus, innovation] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, ydata, Qtrue, Rtrue)
+
+
+
+
