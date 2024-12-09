@@ -261,6 +261,7 @@ const.phi_g0 = -pi/18; % steering angle [rad]
 const.v_a0 = 12; % linear velocity [m/s]
 const.w_a0 = pi/25; % angluar rate [rad/s]
 
+const.x0 = x0;
 % a) 
 
 %%% LKF 
@@ -271,14 +272,13 @@ P0 = 1000 * eye(length(del_x0));
 T = length(ydata);
 LKF_time = 1:T;
 
+% MC
+
+
+[time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue);
+
 % run LKF
-[del_x_plus, P_plus, innovation, del_y] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, ydata, Qtrue, Rtrue);
-
-% get the total state
-x_LKF_full = del_x_plus + x_nom';
-
-% get total y meaurements 
-y_LKF_total = del_y + y_nom;
+[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_noisy, y_noisy, ydata, Qtrue, Rtrue);
 
 % plotting 
 n = length(del_x0);
@@ -310,7 +310,7 @@ xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements vs Time, LKF Simulation','Interpreter','latex')
 const.x0 = x0;
 
-% a) 
+% b) 
 
 %%% Verifying TMT
 % [tmont,Xmont,Ymont] = TMTSim(const,Qtrue,Rtrue);

@@ -1,5 +1,4 @@
-function [del_x_plus, P_plus, innovation, del_y_calc] = LKF(del_x0, P0, const, DT_mat_func, x_nom, y_nom, y_meas, Q, R)
-
+function [x_plus_full, P_plus, innovation, y_calc_full] = LKF(del_x0, P0, const, DT_mat_func, x_nom, y_nom, y_meas, Q, R)
 %%% Kalman Filter Function 
 % Inputs: 
 %   del_x0(n,1) = intial mean of the system 
@@ -58,4 +57,10 @@ function [del_x_plus, P_plus, innovation, del_y_calc] = LKF(del_x0, P0, const, D
         del_y_calc(:,k) = H_tilde * del_x_plus(:,k+1) + M_tilde * del_u(:,k);
     end
 
+    % get the total state
+    x_plus_full = del_x_plus + x_nom';
+    
+    % get total y meaurements 
+    y_calc_full = del_y_calc + y_nom;
+    
 end
