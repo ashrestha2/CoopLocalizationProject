@@ -1,4 +1,4 @@
-function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,u_nom,const,Qtrue,Rtrue,Qkf)
+function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,DT_mat_func,const,Qtrue,Rtrue)
     n = 6;
     p = 5;
     for i = 1:N
@@ -6,17 +6,21 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y] = FindNISNESS(N,del_x0,P0,x_nom,
         [t,xtrue,ytrue] = TMTSim(const,Qtrue,Rtrue);
 
         % Kalman filter 
-        [x_plus, P_plus, innovation] = LKF(del_x0, P0, const, DT_mat_func, x_nom, y_nom, u_nom, y_true, Qkf, Rtrue);
+        [x_plus, P_plus, Sk, y_minus] = LKF(del_x0, P0, const, DT_mat_func, xtrue, y_nom, ytrue, Qtrue, Rtrue);
 
 
         % Calculate NEES and NIS
-        NEES(:,i) = (xtrue - x_plus)*inv(Pplus)*(xtrue - x_plus);
-        NIS(:,i) = (ytrue- y_minus)*inv(Sk)*(ytrue - y_minus);
+        for j = 1: length(t)
+            NEES(i,j) = (xtrue(j,:) - x_plus(:,j)')*inv(P_plus(:,:,j))*(xtrue(j,:) - x_plus(:,j)')';
+            if j > 2
+                NIS(i,j-1) = (ytrue(:,j-1) - y_minus(:,j-1))'*inv(Sk(:,:,j-1))*(ytrue(:,j-1) - y_minus(:,j-1));
+            end
+        end
     end
 
     % NEES Test:
     epsNEESbar = mean(NEES,1);
-    alphaNEES = 0.01;
+    alphaNEES = 0.05;
     Nnx = N*n;
     r1x = chi2inv(alphaNEES/2, Nnx)./N;
     r2x = chi2inv(1-alphaNEES/2, Nnx)./N;
