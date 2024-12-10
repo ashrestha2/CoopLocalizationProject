@@ -247,7 +247,7 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
 
-close all;
+% close all;
 
 %%% 4) Implement and tune KF
 
@@ -273,20 +273,21 @@ P0 = 100 * eye(length(del_x0));
 %P0 = diag([100, 100, 2*pi, 100, 100, 2*pi]);
 % y_nom = findYnom(x_nom);
 T = length(ydata);
-LKF_time = 0:1000;
-N = 5;
+endTime = 100;
+LKF_time = 0:const.deltaT:endTime;
+N = 10;
 
-[epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue);
+[epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
 
 % get noisy measurements and proces s
-[time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue);
+[time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue,endTime);
 
 % % run batch ls -- to get initial values for LKF
 % [x_bls, P_bls] = BatchLS(y_noisy,Rtrue,x_noisy,const,@CT_to_DT);
 
 % run LKF
 %[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
-[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
+[x_LKF_full, P_plus, innovation, y_LKF_total,sigma] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
 
 
 % plotting 
@@ -298,9 +299,13 @@ for j = 1:n
     if j == 3 || j == 6
         plot(LKF_time,wrapToPi(x_LKF_full(j,:)),'b',LineWidth=1.2)
         plot(LKF_time,wrapToPi(x_noisy(:,j)),'r--',LineWidth=1.2)
+        % plot(LKF_time,wrapToPi(x_LKF_full(j,:))+2*sigma(j,:),'b--')
+        % plot(LKF_time,wrapToPi(x_LKF_full(j,:))-2*sigma(j,:),'b--')
     else
         plot(LKF_time,x_LKF_full(j,:),'b',LineWidth=1.2)
         plot(LKF_time,x_noisy(:,j),'r--',LineWidth=1.2)
+        % plot(LKF_time,x_LKF_full(j,:)+2*sigma(j,:),'b--')
+        % plot(LKF_time,x_LKF_full(j,:)-2*sigma(j,:),'b--')
     end
     ylabel(var{j},'Interpreter','latex')
 end
@@ -360,44 +365,47 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 % testing NEES & NIS
 for ts = 1:length(t)
-    NEES = error_x(ts,:)  * inv(P_plus(:,:,ts)) * error_x(ts,:)';
-    if (ts > 2)
-        NIS = error_y(:,ts-1)  * inv(innovation(:,:,ts-1)) * error_y(:,ts-1)';
+    invP(:,:,ts) = inv(P_plus(:,:,ts));
+    NEES(ts) = error_x(ts,:)  * inv(P_plus(:,:,ts)) * error_x(ts,:)';
+    if (ts >= 2)
+        NIS(ts) = error_y(:,ts-1)'  * inv(innovation(:,:,ts-1)) * error_y(:,ts-1);
     end 
 end
 
+figure 
+plot(t,NIS)
 
 % b) 
-
+%%
 %%% Verifying TMT
-% [tmont,Xmont,Ymont] = TMTSim(const,Qtrue,Rtrue);
-% 
-% var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
-% figure
-% for i = 1:n
-%     subplot(n,1,i)
-%     plot(tmont,Xmont(:,i),'r',LineWidth=1.2)
-%     if i == 3 || i == 6
-%         plot(tmont,wrapToPi(Xmont(:,i)),'r',LineWidth=1.2)
-%     end
-%     ylabel(var{i},'Interpreter','latex')
-% end
-% xlabel('Time (secs)','Interpreter','latex')
-% sgtitle('States vs Time, Monte Carlo Simulation','Interpreter','latex')
-% 
-% p = min(size(y_nom));
-% var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
-% figure();
-% for i = 1:p
-%     subplot(p,1,i)
-%     plot(tmont(2:end),Ymont(i,:),'r',LineWidth=1.2)
-%     if i == 1 || i == 3
-%         plot(tmont(2:end),wrapToPi(Ymont(i,:)),'r',LineWidth=1.2)
-%     end
-%     ylabel(var{i},'Interpreter','latex')
-% end
-% xlabel('Time (secs)','Interpreter','latex')
-% sgtitle('Measurements vs Time, Monte Carlo Simulation','Interpreter','latex')
+[tmont,Xmont,Ymont] = TMTSim(const,Qtrue,Rtrue);
+
+var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
+figure
+for i = 1:n
+    subplot(n,1,i)
+    plot(tmont,Xmont(:,i),'r',LineWidth=1.2)
+    if i == 3 || i == 6
+        plot(tmont,wrapToPi(Xmont(:,i)),'r',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States vs Time, Monte Carlo Simulation','Interpreter','latex')
+
+p = min(size(y_nom));
+var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
+figure();
+for i = 1:p
+    subplot(p,1,i)
+    plot(tmont(2:end),Ymont(i,:),'r',LineWidth=1.2)
+    if i == 1 || i == 3
+        plot(tmont(2:end),wrapToPi(Ymont(i,:)),'r',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements vs Time, Monte Carlo Simulation','Interpreter','latex')
 
 
 

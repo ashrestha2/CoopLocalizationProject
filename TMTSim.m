@@ -1,5 +1,5 @@
-function [time_iter,x_array,y] = TMTSim(const,Qtrue,Rtrue)
-    t_int = 0:const.deltaT:100;
+function [time_iter,x_array,y] = TMTSim(const,Qtrue,Rtrue,endTime)
+    t_int = 0:const.deltaT:endTime;
     u = [const.v_g0;const.phi_g0;const.v_a0;const.w_a0];
     perturb_x0 = [0;1;0;0;0;0.1];
     x_array(1,:) = const.x0 + perturb_x0;

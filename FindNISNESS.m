@@ -1,12 +1,12 @@
-function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,DT_mat_func,const,Qtrue,Rtrue)
+function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,DT_mat_func,const,Qtrue,Rtrue,endTime)
     n = 6;
     p = 5;
     for i = 1:N
         % Generate true trajectory and measurements from system
-        [t,xtrue,ytrue] = TMTSim(const,Qtrue,Rtrue);
+        [t,xtrue,ytrue] = TMTSim(const,Qtrue,Rtrue,endTime);
 
         % Kalman filter 
-        [x_plus, P_plus, Sk, y_minus] = LKF(del_x0, P0, const, DT_mat_func, xtrue, y_nom, ytrue, Qtrue, Rtrue);
+        [x_plus, P_plus, Sk, y_minus] = LKF(del_x0, P0, const, DT_mat_func, x_nom, y_nom, ytrue, Qtrue, Rtrue);
 
 
         % Calculate NEES and NIS
