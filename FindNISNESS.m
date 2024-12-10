@@ -1,4 +1,4 @@
-function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,DT_mat_func,const,Qtrue,Rtrue)
+function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,DT_mat_func,const,Qtrue,Rtrue)
     n = 6;
     p = 5;
     for i = 1:N
@@ -12,6 +12,7 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y] = FindNISNESS(N,del_x0,P0,x_nom,
         % Calculate NEES and NIS
         for j = 1: length(t)
             NEES(i,j) = (xtrue(j,:) - x_plus(:,j)')*inv(P_plus(:,:,j))*(xtrue(j,:) - x_plus(:,j)')';
+            error_x(:,i,j) = xtrue(j,:) - x_plus(:,j)';
             if j > 2
                 NIS(i,j-1) = (ytrue(:,j-1) - y_minus(:,j-1))'*inv(Sk(:,:,j-1))*(ytrue(:,j-1) - y_minus(:,j-1));
             end
@@ -33,6 +34,7 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y] = FindNISNESS(N,del_x0,P0,x_nom,
     xlabel('time step, k','FontSize',14)
     title('NEES Estimation Results','FontSize',14)
     legend('NEES @ time k', 'r_1 bound', 'r_2 bound')
+    ylim([0 15])
     
     epsNISbar = mean(NIS,1);
     alphaNIS = 0.05;
@@ -48,4 +50,5 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y] = FindNISNESS(N,del_x0,P0,x_nom,
     xlabel('time step, k','FontSize',14)
     title('NIS Estimation Results','FontSize',14)
     legend('NIS @ time k', 'r_1 bound', 'r_2 bound')
+    ylim([0 15])
 end

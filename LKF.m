@@ -22,7 +22,7 @@ function [x_plus_full, P_plus, innovation, y_calc_full] = LKF(del_x0, P0, const,
 %   innovation??/?
 %   
 
-    Q = Q * 5000; 
+    Q = Q * 10;
 
     % initialize P(+) and del_x(+) 
     del_x_plus(:,1) = del_x0;

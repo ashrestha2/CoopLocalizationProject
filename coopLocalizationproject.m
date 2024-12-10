@@ -247,6 +247,8 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
 
+close all;
+
 %%% 4) Implement and tune KF
 
 load("cooplocalization_finalproj_KFdata.mat")
@@ -267,49 +269,103 @@ const.x0 = x0;
 %%% LKF 
 % IC 
 del_x0 = [0;1;0;0;0;0.1];
-P0 = 1000 * eye(length(del_x0));
+P0 = 100 * eye(length(del_x0));
+%P0 = diag([100, 100, 2*pi, 100, 100, 2*pi]);
 % y_nom = findYnom(x_nom);
 T = length(ydata);
 LKF_time = 0:1000;
-N = 10;
+N = 5;
 
-[epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue);
+[epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue);
 
-% % get noisy measurements and proces s
-% [time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue);
-% % run LKF
-% [x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
-% 
-% 
-% % plotting 
-% n = length(del_x0);
-% var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
-% figure();
-% for j = 1:n
-%     subplot(n,1,j); hold on;
-%     plot(LKF_time,x_LKF_full(j,:),'b',LineWidth=1.2)
-%     if j == 3 || j == 6
-%         plot(LKF_time,wrapToPi(x_LKF_full(j,:)),'b',LineWidth=1.2)
-%     end
-%     ylabel(var{j},'Interpreter','latex')
-% end
-% xlabel('Time (secs)','Interpreter','latex')
-% sgtitle('States vs Time, LKF Simulation','Interpreter','latex')
-% 
-% p = min(size(y_nom));
-% var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
-% figure();
-% for j = 1:p
-%     subplot(p,1,j)
-%     plot(LKF_time(2:end),y_LKF_total(j,:),'b',LineWidth=1.2)
-%     if j == 1 || j == 3
-%         plot(LKF_time(2:end),wrapToPi(y_LKF_total(j,:)),'b',LineWidth=1.2)
-%     end
-%     ylabel(var{j},'Interpreter','latex')
-% end
-% xlabel('Time (secs)','Interpreter','latex')
-% sgtitle('Measurements vs Time, LKF Simulation','Interpreter','latex')
-% const.x0 = x0;
+% get noisy measurements and proces s
+[time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue);
+
+% % run batch ls -- to get initial values for LKF
+% [x_bls, P_bls] = BatchLS(y_noisy,Rtrue,x_noisy,const,@CT_to_DT);
+
+% run LKF
+%[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
+[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
+
+
+% plotting 
+n = length(del_x0);
+var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
+figure();
+for j = 1:n
+    subplot(n,1,j); hold on;
+    if j == 3 || j == 6
+        plot(LKF_time,wrapToPi(x_LKF_full(j,:)),'b',LineWidth=1.2)
+        plot(LKF_time,wrapToPi(x_noisy(:,j)),'r--',LineWidth=1.2)
+    else
+        plot(LKF_time,x_LKF_full(j,:),'b',LineWidth=1.2)
+        plot(LKF_time,x_noisy(:,j),'r--',LineWidth=1.2)
+    end
+    ylabel(var{j},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States vs Time, LKF Simulation','Interpreter','latex')
+
+p = min(size(y_nom));
+var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
+figure();
+for j = 1:p
+    subplot(p,1,j); hold on;
+    if j == 1 || j == 3
+        plot(LKF_time(2:end),wrapToPi(y_LKF_total(j,:)),'b',LineWidth=1.2)
+        plot(LKF_time(2:end),wrapToPi(y_noisy(j,:)),'r--',LineWidth=1.2)
+    else
+        plot(LKF_time(2:end),y_LKF_total(j,:),'b',LineWidth=1.2)
+        plot(LKF_time(2:end),y_noisy(j,:),'r--',LineWidth=1.2)
+    end
+    ylabel(var{j},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements vs Time, LKF Simulation','Interpreter','latex')
+const.x0 = x0;
+
+% Calculating error
+error_x = x_LKF_full' - x_noisy;
+error_y = y_LKF_total - y_noisy;
+
+n = length(x0);
+var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
+figure
+for i = 1:n
+    subplot(n,1,i)
+    plot(t,error_x(:,i),'g',LineWidth=1.2)
+    if i == 3 || i == 6
+        plot(t,wrapToPi(error_x(:,i)),'g',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States Error vs Time','Interpreter','latex')
+
+p = min(size(y_nom));
+var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
+figure();
+for i = 1:p
+    subplot(p,1,i)
+    plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
+    if i == 1 || i == 3
+        plot(t(2:end),wrapToPi(error_y(i,:)),'g',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements Error vs Time','Interpreter','latex')
+
+
+% testing NEES & NIS
+for ts = 1:length(t)
+    NEES = error_x(ts,:)  * inv(P_plus(:,:,ts)) * error_x(ts,:)';
+    if (ts > 2)
+        NIS = error_y(:,ts-1)  * inv(innovation(:,:,ts-1)) * error_y(:,ts-1)';
+    end 
+end
+
 
 % b) 
 
