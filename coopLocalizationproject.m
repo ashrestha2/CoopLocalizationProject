@@ -247,7 +247,7 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
 
-% close all;
+close all;
 rng(100);
 
 %%% 4) Implement and tune KF
@@ -288,7 +288,7 @@ N = 10;
 
 % run LKF
 %[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
-[x_LKF_full, P_plus, innovation, y_LKF_total,sigma] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
+[x_LKF_full, P_plus, SK, y_LKF_total,sigma, innovation] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
 
 
 % plotting 

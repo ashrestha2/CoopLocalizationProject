@@ -247,7 +247,8 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
 
-% close all;
+close all;
+rng(100);
 
 %%% 4) Implement and tune KF
 
@@ -336,14 +337,14 @@ error_y = y_LKF_total - y_noisy;
 
 n = length(x0);
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
-figure();
+figure(20);
 for i = 1:n
     subplot(n,1,i); hold on;
-    plot(t,error_x(:,i),'g',LineWidth=1.2)
+    plot(t,error_x(:,i),'r',LineWidth=1.2)
     plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
     plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     if i == 3 || i == 6
-        plot(t,wrapToPi(error_x(:,i)),'g',LineWidth=1.2)
+        plot(t,wrapToPi(error_x(:,i)),'r',LineWidth=1.2)
         plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
         plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     end
@@ -354,7 +355,7 @@ sgtitle('States Error vs Time','Interpreter','latex')
 
 p = min(size(y_nom));
 var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
-figure();
+figure(21);
 for i = 1:p
     subplot(p,1,i); hold on;
     plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
