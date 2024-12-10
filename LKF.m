@@ -21,8 +21,11 @@ function [x_plus_full, P_plus, innovation, y_calc_full,sigma] = LKF(del_x0, P0, 
 %       covariance matricies after they've been filtered
 %   innovation??/?
 %   
-
-    Q = Q * 10;
+    % works for NIS -- nice NIS
+    %Q = Q * 10;
+    % changing for NEES 
+    Q = Q*500;
+    % Q(3,3) = Q(3,3) * 3;
 
     % initialize P(+) and del_x(+) 
     del_x_plus(:,1) = del_x0;

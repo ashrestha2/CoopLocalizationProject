@@ -247,7 +247,7 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 %% PART 2: STOCHASTIC NONLINEAR FILTERING
 
-close all;
+% close all;
 
 %%% 4) Implement and tune KF
 
@@ -275,9 +275,9 @@ P0 = 100 * eye(length(del_x0));
 T = length(ydata);
 endTime = 100;
 LKF_time = 0:const.deltaT:endTime;
-N = 5;
+N = 10;
 
-% [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue);
+[epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
 
 % get noisy measurements and proces s
 [time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue,endTime);
@@ -336,12 +336,16 @@ error_y = y_LKF_total - y_noisy;
 
 n = length(x0);
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
-figure
+figure();
 for i = 1:n
-    subplot(n,1,i)
+    subplot(n,1,i); hold on;
     plot(t,error_x(:,i),'g',LineWidth=1.2)
+    plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
+    plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     if i == 3 || i == 6
         plot(t,wrapToPi(error_x(:,i)),'g',LineWidth=1.2)
+        plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
+        plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end
@@ -352,7 +356,7 @@ p = min(size(y_nom));
 var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
 figure();
 for i = 1:p
-    subplot(p,1,i)
+    subplot(p,1,i); hold on;
     plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
     if i == 1 || i == 3
         plot(t(2:end),wrapToPi(error_y(i,:)),'g',LineWidth=1.2)
@@ -372,8 +376,8 @@ for ts = 1:length(t)
     end 
 end
 
-figure 
-plot(t(2:end),NIS)
+% figure 
+% plot(t,NIS)
 
 % b) 
 %%

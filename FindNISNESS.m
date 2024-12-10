@@ -37,7 +37,7 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x
     ylim([0 15])
     
     epsNISbar = mean(NIS,1);
-    alphaNIS = 0.05;
+    alphaNIS = 0.1;
     Nny = N*p;
     r1y = chi2inv(alphaNIS/2,Nny)./N;
     r2y = chi2inv(1-alphaNIS/2,Nny)./N;
