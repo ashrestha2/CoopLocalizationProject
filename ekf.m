@@ -1,4 +1,4 @@
-function [x_plus, P_plus, innovations, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func)
+function [x_plus, P_plus, innovations, S, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func)
     % Extended Kalman Filter (EKF) with F_k output
     %
     % Outputs:
@@ -22,7 +22,7 @@ function [x_plus, P_plus, innovations, F_matrices] = ekf(y_meas, x0, P0, Q, R, u
     P_plus(:, :, 1) = P0; % Initial covariance matrix
 
     % EKF Loop
-    for k = 1:N-1
+    for k = 1:N
         % Prediction Step
         x_pred = f(x_plus(:, k), u(:, k), dt); % Predict state
         F_k = F_func(x_plus(:, k), u(:, k), dt); % State transition Jacobian
@@ -32,15 +32,18 @@ function [x_plus, P_plus, innovations, F_matrices] = ekf(y_meas, x0, P0, Q, R, u
         % Measurement Update Step
         H_k = H_func(x_pred); % Measurement Jacobian
         y_pred = h(x_pred); % Predicted measurement
-        S = H_k * P_pred * H_k' + R; % Innovation covariance
-        K = P_pred * H_k' / S; % Kalman gain
+        S(:,:,k) = H_k * P_pred * H_k' + R; % Innovation covariance
+        K = P_pred * H_k' / S(:,:,k); % Kalman gain
 
         % Innovation (residual)
-        innovations(:, k+1) = y_meas(:, k+1) - y_pred;
+        innovations(:, k) = y_meas(:, k) - y_pred;
+        innovations(1,k) = wrapToPi(innovations(1,k));
+        innovations(3,k) = wrapToPi(innovations(3,k));
 
         % Update state and covariance
-        x_plus(:, k+1) = x_pred + K * innovations(:, k+1); % Updated state estimate
+        x_plus(:, k+1) = x_pred + K * innovations(:, k); % Updated state estimate
         P_plus(:, :, k+1) = (eye(state_dim) - K * H_k) * P_pred; % Updated covariance
+        y_calc(:,k) = H_k * x_plus(:,k+1);
     end
 
     % Store the final F matrix
