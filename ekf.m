@@ -1,46 +1,48 @@
-% Initialization
-dt = 0.1; % Sampling time
-N = 1000; % Number of time steps
-MC_runs = 100; % Number of Monte Carlo simulations
+function [x_plus, P_plus, innovations, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func)
+    % Extended Kalman Filter (EKF) with F_k output
+    %
+    % Outputs:
+    % x_plus      - Updated state estimates (state_dim x N)
+    % P_plus      - Updated covariance matrices (state_dim x state_dim x N)
+    % innovations - Measurement residuals (meas_dim x N)
+    % F_matrices  - State transition Jacobians (state_dim x state_dim x N)
 
-% Load initial parameters from prog_report_1
-x0 = [10; 0; pi/2; -60; 0; -pi/2]; % Initial state
-u_nom = [2; -pi/18; 12; pi/25]; % Control inputs
+    % Initialize dimensions
+    state_dim = length(x0);
+    meas_dim = size(y_meas, 1);
 
-% Process and measurement noise covariances
-Q_EKF = diag([0.01, 0.01, 0.01, 0.01, 0.01, 0.01]);
-R_EKF = diag([0.05, 0.1, 0.05, 0.01, 0.01]);
+    % Preallocate storage
+    x_plus = zeros(state_dim, N); % Posterior state estimates
+    P_plus = zeros(state_dim, state_dim, N); % Posterior covariance matrices
+    innovations = zeros(meas_dim, N); % Measurement residuals (innovations)
+    F_matrices = zeros(state_dim, state_dim, N); % State transition Jacobians
 
+    % Initial conditions
+    x_plus(:, 1) = x0; % Initial state estimate
+    P_plus(:, :, 1) = P0; % Initial covariance matrix
 
-% Monte Carlo Simulations
-for mc = 1:MC_runs
-    % Generate nominal trajectory and noisy ground truth
-    [t, x_nom] = FindNominal(x0, u_nom, dt, N); % Nominal trajectory
-    w = mvnrnd(zeros(6, 1), Q_EKF, N)'; % Process noise
-    x_true = x_nom + w; % Noisy ground truth trajectory
-    
-    % Generate noisy measurements
-    y_nom = findYnom(x_nom); % Nominal measurements
-    v = mvnrnd(zeros(5, 1), R_EKF, N)'; % Measurement noise
-    y_meas = y_nom + v; % Noisy measurements
-    
-    % EKF Initialization
-    x_hat = x0; % Initial state estimate
-    P = eye(6); % Initial covariance
-    
     % EKF Loop
-    for k = 1:N
+    for k = 1:N-1
         % Prediction Step
-        [x_hat_pred, F] = ugvEOM(x_hat, u_nom, dt); % Predict state and Jacobian
-        P_pred = F * P * F' + Q_EKF; % Predict covariance
-        
-        % Measurement Update
-        [y_pred, H] = findYnom(x_hat_pred); % Predicted measurement and Jacobian
-        S = H * P_pred * H' + R_EKF; % Innovation covariance
-        K = P_pred * H' / S; % Kalman gain
-        x_hat = x_hat_pred + K * (y_meas(:, k) - y_pred); % Update state
-        P = (eye(6) - K * H) * P_pred; % Update covariance
-        
-    end
-end
+        x_pred = f(x_plus(:, k), u(:, k), dt); % Predict state
+        F_k = F_func(x_plus(:, k), u(:, k), dt); % State transition Jacobian
+        F_matrices(:, :, k) = F_k; % Store F_k for this step
+        P_pred = F_k * P_plus(:, :, k) * F_k' + Q; % Predict covariance
 
+        % Measurement Update Step
+        H_k = H_func(x_pred); % Measurement Jacobian
+        y_pred = h(x_pred); % Predicted measurement
+        S = H_k * P_pred * H_k' + R; % Innovation covariance
+        K = P_pred * H_k' / S; % Kalman gain
+
+        % Innovation (residual)
+        innovations(:, k+1) = y_meas(:, k+1) - y_pred;
+
+        % Update state and covariance
+        x_plus(:, k+1) = x_pred + K * innovations(:, k+1); % Updated state estimate
+        P_plus(:, :, k+1) = (eye(state_dim) - K * H_k) * P_pred; % Updated covariance
+    end
+
+    % Store the final F matrix
+    F_matrices(:, :, N) = F_func(x_plus(:, N), u(:, N), dt);
+end
