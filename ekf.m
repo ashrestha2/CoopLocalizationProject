@@ -43,7 +43,7 @@ function [x_plus, P_plus, innovations, S, y_calc, F_matrices] = ekf(y_meas, x0, 
         % Update state and covariance
         x_plus(:, k+1) = x_pred + K * innovations(:, k); % Updated state estimate
         P_plus(:, :, k+1) = (eye(state_dim) - K * H_k) * P_pred; % Updated covariance
-        y_calc(:,k) = H_k * x_plus(:,k+1);
+        y_calc(:,k) = h(x_plus(:, k+1))
     end
 
     % Store the final F matrix
