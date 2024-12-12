@@ -138,10 +138,13 @@ n = length(x0);
 var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
 figure();
 for j = 1:n
-    subplot(n,1,j)
-    plot(time_steps,x_linear(:,j),'b',LineWidth=1.2)
+    subplot(n,1,j); hold on; 
     if j == 3 || j == 6
-        plot(time_steps,wrapToPi(x_linear(:,j)),'b',LineWidth=1.2)
+        plot(time_steps,wrapToPi(x_linear(:,j)),'r',LineWidth=1.2)
+        plot(time_steps,wrapToPi(x_nom(:,j)),'b',LineWidth=1.2)
+    else 
+        plot(time_steps,x_linear(:,j),'r',LineWidth=1.2)
+        plot(time_steps,x_nom(:,j),'b',LineWidth=1.2)
     end
     ylabel(var{j},'Interpreter','latex')
 end
@@ -158,10 +161,13 @@ p = min(size(y_nom));
 var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
 figure();
 for j = 1:p
-    subplot(p,1,j)
-    plot(time_steps(2:end),y_linear(j,:),'b',LineWidth=1.2)
+    subplot(p,1,j); hold on; 
     if j == 1 || j == 3
-        plot(time_steps(2:end),wrapToPi(y_linear(j,:)),'b',LineWidth=1.2)
+        plot(time_steps(2:end),wrapToPi(y_linear(j,:)),'r',LineWidth=1.2)
+        plot(time_steps(2:end),wrapToPi(y_nom(j,:)),'b',LineWidth=1.2)
+    else
+        plot(time_steps(2:end),y_linear(j,:),'r',LineWidth=1.2)
+        plot(time_steps(2:end),y_nom(j,:),'b',LineWidth=1.2)
     end
     ylabel(var{j},'Interpreter','latex')
 end
@@ -271,15 +277,16 @@ const.x0 = x0;
 %%% LKF 
 % IC 
 del_x0 = [0;1;0;0;0;0.1];
-%P0 = 5 * eye(length(del_x0));
-P0 = diag([5, 5, pi/4, 10, 10, pi/4]);
+%del_x0 = [0;0;0;0;0;0];
+P0 = 5 * eye(length(del_x0));
+%P0 = diag([5, 5, pi/4, 10, 10, pi/4]);
 % y_nom = findYnom(x_nom);
 T = length(ydata);
 endTime = 100;
 LKF_time = 0:const.deltaT:endTime;
 N = 10;
 
-[epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
+% [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
 
 % get noisy measurements and proces s
 [time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue,endTime);
