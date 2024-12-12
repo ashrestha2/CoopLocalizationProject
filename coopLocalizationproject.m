@@ -138,10 +138,13 @@ n = length(x0);
 var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
 figure();
 for j = 1:n
-    subplot(n,1,j)
-    plot(time_steps,x_linear(:,j),'b',LineWidth=1.2)
+    subplot(n,1,j); hold on; 
     if j == 3 || j == 6
-        plot(time_steps,wrapToPi(x_linear(:,j)),'b',LineWidth=1.2)
+        plot(time_steps,wrapToPi(x_linear(:,j)),'r',LineWidth=1.2)
+        plot(time_steps,wrapToPi(x_nom(:,j)),'b',LineWidth=1.2)
+    else 
+        plot(time_steps,x_linear(:,j),'r',LineWidth=1.2)
+        plot(time_steps,x_nom(:,j),'b',LineWidth=1.2)
     end
     ylabel(var{j},'Interpreter','latex')
 end
@@ -158,10 +161,13 @@ p = min(size(y_nom));
 var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
 figure();
 for j = 1:p
-    subplot(p,1,j)
-    plot(time_steps(2:end),y_linear(j,:),'b',LineWidth=1.2)
+    subplot(p,1,j); hold on; 
     if j == 1 || j == 3
-        plot(time_steps(2:end),wrapToPi(y_linear(j,:)),'b',LineWidth=1.2)
+        plot(time_steps(2:end),wrapToPi(y_linear(j,:)),'r',LineWidth=1.2)
+        plot(time_steps(2:end),wrapToPi(y_nom(j,:)),'b',LineWidth=1.2)
+    else
+        plot(time_steps(2:end),y_linear(j,:),'r',LineWidth=1.2)
+        plot(time_steps(2:end),y_nom(j,:),'b',LineWidth=1.2)
     end
     ylabel(var{j},'Interpreter','latex')
 end
@@ -271,13 +277,14 @@ const.x0 = x0;
 %%% LKF 
 % IC 
 del_x0 = [0;1;0;0;0;0.1];
+%del_x0 = [0;0;0;0;0;0];
 %P0 = 5 * eye(length(del_x0));
 P0 = diag([5, 5, pi/4, 10, 10, pi/4]);
 % y_nom = findYnom(x_nom);
 T = length(ydata);
 endTime = 100;
 LKF_time = 0:const.deltaT:endTime;
-N = 50;
+N = 10;
 
 [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
 
@@ -291,6 +298,7 @@ N = 50;
 %[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
 [x_LKF_full, P_plus, SK, y_LKF_total,sigma, innovation] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
 
+%%%PLOT DEL Y TO SEE HWERE PERTURBATIONS GET LARGE
 
 % plotting 
 n = length(del_x0);
@@ -334,18 +342,23 @@ const.x0 = x0;
 
 % Calculating error
 error_x = x_LKF_full' - x_noisy;
+error_x(:,3) = wrapToPi(error_x(:,3));
+error_x(:,6) = wrapToPi(error_x(:,6));
 error_y = y_LKF_total - y_noisy;
+error_y(1,:) = wrapToPi(error_y(1,:));
+error_y(3,:) = wrapToPi(error_y(3,:));
 
 n = length(x0);
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
 figure(20);
 for i = 1:n
     subplot(n,1,i); hold on;
-    plot(t,error_x(:,i),'r',LineWidth=1.2)
-    plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
-    plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     if i == 3 || i == 6
         plot(t,wrapToPi(error_x(:,i)),'r',LineWidth=1.2)
+        plot(t,wrapToPi(2*sigma(j,:)),'b--',LineWidth=1.2)
+        plot(t,wrapToPi(-2*sigma(j,:)),'b--',LineWidth=1.2)
+    else
+        plot(t,error_x(:,i),'r',LineWidth=1.2)
         plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
         plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     end
@@ -359,9 +372,10 @@ var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]
 figure(21);
 for i = 1:p
     subplot(p,1,i); hold on;
-    plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
     if i == 1 || i == 3
         plot(t(2:end),wrapToPi(error_y(i,:)),'g',LineWidth=1.2)
+    else
+        plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end
