@@ -74,8 +74,8 @@ endTime = 100;
 % Define parameters
 y_meas = y_noisy; % Measurements (5 x 100)
 x0 = [10; 0; pi/2; -60; 0; -pi/2]; % Initial state
-P0 = eye(6); % Initial covariance
-Q = 100 * Qtrue; % Process noise covariance
+P0 = 10 * eye(6); % Initial covariance
+Q = 100 * Qtrue; % Process noise covariance % added 100
 R = Rtrue; % Measurement noise covariance
 u = repmat([2; -pi/18; 12; pi/25], 1, 1000); % Constant control inputs
 dt = 0.1; % Sampling time
@@ -172,3 +172,4 @@ xlabel('time step, k','FontSize',14)
 title('NIS Estimation Results','FontSize',14)
 legend('NIS @ time k', 'r_1 bound', 'r_2 bound')
 ylim([0 8])
+
