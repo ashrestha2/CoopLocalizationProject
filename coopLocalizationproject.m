@@ -369,7 +369,6 @@ end
 xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements Error vs Time','Interpreter','latex')
 
-
 % % testing NEES & NIS
 % for ts = 1:length(t)
 %     invP(:,:,ts) = inv(P_plus(:,:,ts));
@@ -385,34 +384,34 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 % b) 
 %%
 %%% Verifying TMT
-[tmont,Xmont,Ymont] = TMTSim(const,Qtrue,Rtrue);
-
-var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
-figure
-for i = 1:n
-    subplot(n,1,i)
-    plot(tmont,Xmont(:,i),'r',LineWidth=1.2)
-    if i == 3 || i == 6
-        plot(tmont,wrapToPi(Xmont(:,i)),'r',LineWidth=1.2)
-    end
-    ylabel(var{i},'Interpreter','latex')
-end
-xlabel('Time (secs)','Interpreter','latex')
-sgtitle('States vs Time, Monte Carlo Simulation','Interpreter','latex')
-
-p = min(size(y_nom));
-var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
-figure();
-for i = 1:p
-    subplot(p,1,i)
-    plot(tmont(2:end),Ymont(i,:),'r',LineWidth=1.2)
-    if i == 1 || i == 3
-        plot(tmont(2:end),wrapToPi(Ymont(i,:)),'r',LineWidth=1.2)
-    end
-    ylabel(var{i},'Interpreter','latex')
-end
-xlabel('Time (secs)','Interpreter','latex')
-sgtitle('Measurements vs Time, Monte Carlo Simulation','Interpreter','latex')
+% [tmont,Xmont,Ymont] = TMTSim(const,Qtrue,Rtrue,endTime);
+% 
+% var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
+% figure
+% for i = 1:n
+%     subplot(n,1,i)
+%     plot(tmont,Xmont(:,i),'r',LineWidth=1.2)
+%     if i == 3 || i == 6
+%         plot(tmont,wrapToPi(Xmont(:,i)),'r',LineWidth=1.2)
+%     end
+%     ylabel(var{i},'Interpreter','latex')
+% end
+% xlabel('Time (secs)','Interpreter','latex')
+% sgtitle('States vs Time, Monte Carlo Simulation','Interpreter','latex')
+% 
+% p = min(size(y_nom));
+% var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
+% figure();
+% for i = 1:p
+%     subplot(p,1,i)
+%     plot(tmont(2:end),Ymont(i,:),'r',LineWidth=1.2)
+%     if i == 1 || i == 3
+%         plot(tmont(2:end),wrapToPi(Ymont(i,:)),'r',LineWidth=1.2)
+%     end
+%     ylabel(var{i},'Interpreter','latex')
+% end
+% xlabel('Time (secs)','Interpreter','latex')
+% sgtitle('Measurements vs Time, Monte Carlo Simulation','Interpreter','latex')
 
 
 

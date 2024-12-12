@@ -74,8 +74,8 @@ endTime = 100;
 % Define parameters
 y_meas = y_noisy; % Measurements (5 x 100)
 x0 = [10; 0; pi/2; -60; 0; -pi/2]; % Initial state
-P0 = eye(6); % Initial covariance
-Q = 100 * Qtrue; % Process noise covariance
+P0 = 5*eye(6); % Initial covariance
+Q = 10 * Qtrue; % Process noise covariance
 R = Rtrue; % Measurement noise covariance
 u = repmat([2; -pi/18; 12; pi/25], 1, 1000); % Constant control inputs
 dt = 0.1; % Sampling time
@@ -142,33 +142,46 @@ end
 
 % NEES Test:
 epsNEESbar = mean(NEES,1);
-alphaNEES = 0.05;
-Nnx = N*n;
-r1x = chi2inv(alphaNEES/2, Nnx)./N;
-r2x = chi2inv(1-alphaNEES/2, Nnx)./N;
+alphaNEES = 0.01;
+Nnx = num*n;
+r1x = chi2inv(alphaNEES/2, Nnx)./num;
+r2x = chi2inv(1-alphaNEES/2, Nnx)./num;
 
 figure
 plot(epsNEESbar,'ro','MarkerSize',6,'LineWidth',2),hold on
 plot(r1x*ones(size(epsNEESbar)),'r--','LineWidth',2)
 plot(r2x*ones(size(epsNEESbar)),'r--','LineWidth',2)
-ylabel('NEES statistic, \bar{\epsilon}_x','FontSize',14)
+ylabel('NEES statistic, $\bar{\epsilon}_x$','FontSize',14,'Interpreter','latex')
 xlabel('time step, k','FontSize',14)
 title('NEES Estimation Results','FontSize',14)
 legend('NEES @ time k', 'r_1 bound', 'r_2 bound')
-ylim([0 8])
+ylim([0 15])
 
 epsNISbar = mean(NIS,1);
-alphaNIS = 0.01;
-Nny = N*p;
-r1y = chi2inv(alphaNIS/2,Nny)./N;
-r2y = chi2inv(1-alphaNIS/2,Nny)./N;
+alphaNIS = 0.1;
+Nny = num*p;
+r1y = chi2inv(alphaNIS/2,Nny)./num;
+r2y = chi2inv(1-alphaNIS/2,Nny)./num;
 
 figure
 plot(epsNISbar,'bo','MarkerSize',6,'LineWidth',2),hold on
 plot(r1y*ones(size(epsNISbar)),'b--','LineWidth',2)
 plot(r2y*ones(size(epsNISbar)),'b--','LineWidth',2)
-ylabel('NIS statistic, \bar{\epsilon}_y','FontSize',14)
+ylabel('NIS statistic, $\bar{\epsilon}_y$','FontSize',14,'Interpreter','latex')
 xlabel('time step, k','FontSize',14)
 title('NIS Estimation Results','FontSize',14)
 legend('NIS @ time k', 'r_1 bound', 'r_2 bound')
-ylim([0 8])
+ylim([0 15])
+
+figure();
+subplot(5,1,1)
+plot(innovation(1,:));
+subplot(5,1,2)
+plot(innovation(2,:));
+subplot(5,1,3)
+plot(innovation(3,:));
+subplot(5,1,4)
+plot(innovation(4,:));
+subplot(5,1,5)
+plot(innovation(5,:));
+sgtitle('innovation')
