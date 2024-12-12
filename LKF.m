@@ -50,6 +50,13 @@ function [x_plus_full, P_plus, Sk, y_calc_full, sigma, innovation] = LKF(del_x0,
         % P_minus = F_tilde * P_plus(:,:,k) * F_tilde' + omega_tilde * Q * omega_tilde';
         P_minus = F_tilde * P_plus(:,:,k) * F_tilde' + Q;
         Sk(:,:,k) = H_tilde*P_minus*H_tilde'+R;
+        % check SK pos def
+        try
+        check = chol(Sk(:,:,k));
+            disp('S is positive definite.');
+        catch
+            disp('S is NOT positive definite.');
+        end
         K(:,:,k+1) = P_minus * H_tilde' * inv(Sk(:,:,k));
     
         % % transition from minus to plus (testing the prediciton step)
