@@ -249,6 +249,7 @@ sgtitle('Measurements Error vs Time','Interpreter','latex')
 
 close all;
 rng(100);
+% rng(100) and rng(1) to see diff behavior 
 
 %%% 4) Implement and tune KF
 
@@ -270,13 +271,13 @@ const.x0 = x0;
 %%% LKF 
 % IC 
 del_x0 = [0;1;0;0;0;0.1];
-P0 = 100 * eye(length(del_x0));
-%P0 = diag([100, 100, 2*pi, 100, 100, 2*pi]);
+%P0 = 5 * eye(length(del_x0));
+P0 = diag([5, 5, pi/4, 10, 10, pi/4]);
 % y_nom = findYnom(x_nom);
 T = length(ydata);
 endTime = 100;
 LKF_time = 0:const.deltaT:endTime;
-N = 10;
+N = 50;
 
 [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
 
@@ -294,17 +295,17 @@ N = 10;
 % plotting 
 n = length(del_x0);
 var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
-figure();
+figure(18);
 for j = 1:n
     subplot(n,1,j); hold on;
     if j == 3 || j == 6
-        plot(LKF_time,wrapToPi(x_LKF_full(j,:)),'b',LineWidth=1.2)
-        plot(LKF_time,wrapToPi(x_noisy(:,j)),'r--',LineWidth=1.2)
+        plot(LKF_time,wrapToPi(x_LKF_full(j,:)),'r',LineWidth=1.2)
+        plot(LKF_time,wrapToPi(x_noisy(:,j)),'b',LineWidth=1.2)
         % plot(LKF_time,wrapToPi(x_LKF_full(j,:))+2*sigma(j,:),'b--')
         % plot(LKF_time,wrapToPi(x_LKF_full(j,:))-2*sigma(j,:),'b--')
     else
-        plot(LKF_time,x_LKF_full(j,:),'b',LineWidth=1.2)
-        plot(LKF_time,x_noisy(:,j),'r--',LineWidth=1.2)
+        plot(LKF_time,x_LKF_full(j,:),'r',LineWidth=1.2)
+        plot(LKF_time,x_noisy(:,j),'b',LineWidth=1.2)
         % plot(LKF_time,x_LKF_full(j,:)+2*sigma(j,:),'b--')
         % plot(LKF_time,x_LKF_full(j,:)-2*sigma(j,:),'b--')
     end
@@ -315,15 +316,15 @@ sgtitle('States vs Time, LKF Simulation','Interpreter','latex')
 
 p = min(size(y_nom));
 var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
-figure();
+figure(19);
 for j = 1:p
     subplot(p,1,j); hold on;
     if j == 1 || j == 3
-        plot(LKF_time(2:end),wrapToPi(y_LKF_total(j,:)),'b',LineWidth=1.2)
-        plot(LKF_time(2:end),wrapToPi(y_noisy(j,:)),'r--',LineWidth=1.2)
+        plot(LKF_time(2:end),wrapToPi(y_LKF_total(j,:)),'r',LineWidth=1.2)
+        plot(LKF_time(2:end),wrapToPi(y_noisy(j,:)),'b',LineWidth=1.2)
     else
-        plot(LKF_time(2:end),y_LKF_total(j,:),'b',LineWidth=1.2)
-        plot(LKF_time(2:end),y_noisy(j,:),'r--',LineWidth=1.2)
+        plot(LKF_time(2:end),y_LKF_total(j,:),'r',LineWidth=1.2)
+        plot(LKF_time(2:end),y_noisy(j,:),'b',LineWidth=1.2)
     end
     ylabel(var{j},'Interpreter','latex')
 end
@@ -367,7 +368,6 @@ end
 xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements Error vs Time','Interpreter','latex')
 
-% 
 % % testing NEES & NIS
 % for ts = 1:length(t)
 %     invP(:,:,ts) = inv(P_plus(:,:,ts));

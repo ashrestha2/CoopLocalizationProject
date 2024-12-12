@@ -26,7 +26,7 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x
     r1x = chi2inv(alphaNEES/2, Nnx)./N;
     r2x = chi2inv(1-alphaNEES/2, Nnx)./N;
    
-    figure
+    figure(15);
     plot(epsNEESbar,'ro','MarkerSize',6,'LineWidth',2),hold on
     plot(r1x*ones(size(epsNEESbar)),'r--','LineWidth',2)
     plot(r2x*ones(size(epsNEESbar)),'r--','LineWidth',2)
@@ -42,7 +42,7 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x
     r1y = chi2inv(alphaNIS/2,Nny)./N;
     r2y = chi2inv(1-alphaNIS/2,Nny)./N;
 
-    figure
+    figure(16);
     plot(epsNISbar,'bo','MarkerSize',6,'LineWidth',2),hold on
     plot(r1y*ones(size(epsNISbar)),'b--','LineWidth',2)
     plot(r2y*ones(size(epsNISbar)),'b--','LineWidth',2)
@@ -53,16 +53,24 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x
     ylim([0 15])
 
 
-figure();
-subplot(5,1,1)
+figure(17);
+subplot(5,1,1); hold on;
 plot(innovation(1,:));
-subplot(5,1,2)
+plot(+2*sqrt(reshape(Sk(1,1,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+plot(-2*sqrt(reshape(Sk(1,1,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+subplot(5,1,2); hold on;
 plot(innovation(2,:));
-subplot(5,1,3)
+plot(+2*sqrt(reshape(Sk(2,2,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+plot(-2*sqrt(reshape(Sk(2,2,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+subplot(5,1,3); hold on;
 plot(innovation(3,:));
-subplot(5,1,4)
+plot(+2*sqrt(reshape(Sk(3,3,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+plot(-2*sqrt(reshape(Sk(3,3,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+subplot(5,1,4); hold on;
 plot(innovation(4,:));
-subplot(5,1,5)
+plot(+2*sqrt(reshape(Sk(4,4,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+plot(-2*sqrt(reshape(Sk(4,4,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+subplot(5,1,5); hold on;
 plot(innovation(5,:));
 sgtitle('innovation')
 

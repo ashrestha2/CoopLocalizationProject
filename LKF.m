@@ -22,9 +22,9 @@ function [x_plus_full, P_plus, Sk, y_calc_full, sigma, innovation] = LKF(del_x0,
 %   innovation??/?
 %   
     % works for NIS -- nice NIS
-    %Q = Q * 10;
+    Q = Q * 100;
     % changing for NEES 
-    Q = Q*10;
+    % Q = Q*2500000;
     % Q(3,3) = Q(3,3) * 3;
 
     % initialize P(+) and del_x(+) 
