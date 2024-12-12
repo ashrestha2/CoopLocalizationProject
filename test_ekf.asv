@@ -205,39 +205,43 @@ ylim([0 15])
 % plot(innovation(5,:));
 % sgtitle('innovation')
 
+% Calculating error
+error_x = x_LKF_full' - xtrue;
+error_x(:,3) = wrapToPi(error_x(:,3));
+error_x(:,6) = wrapToPi(error_x(:,6));
+error_y = y_LKF_total - ytrue;
+error_y(1,:) = wrapToPi(error_y(1,:));
+error_y(3,:) = wrapToPi(error_y(3,:));
 
-ex = reshape(error_x(:,end,:),[6,length(error_x)]);
-% plotting error with cov bounds 
+n = length(x0);
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
 figure(20);
 for i = 1:n
     subplot(n,1,i); hold on;
     if i == 3 || i == 6
-        plot(wrapToPi(ex(i,end,:)),'r',LineWidth=1.2)
-        plot(wrapToPi(-2*sqrt(reshape(P_plus(i,i,2:end),[1,length(P_plus)-1]))),'b--',LineWidth=1.2)
-        plot(wrapToPi(+2*sqrt(reshape(P_plus(i,i,2:end),[1,length(P_plus)-1]))),'b--',LineWidth=1.2)
+        plot(t,wrapToPi(error_x(:,end)),'r',LineWidth=1.2)
+        plot(t,wrapToPi(2*sigma(j,:)),'b--',LineWidth=1.2)
+        plot(+2*sqrt(reshape(sigma(4,4,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+        plot(t,wrapToPi(-2*sigma(j,:)),'b--',LineWidth=1.2)
     else
-        plot(ex(i,end,:),'r',LineWidth=1.2)
-        plot(-2*sqrt(reshape(P_plus(i,i,2:end),[1,length(P_plus)-1])),'b--',LineWidth=1.2)
-        plot(+2*sqrt(reshape(P_plus(i,i,2:end),[1,length(P_plus)-1])),'b--',LineWidth=1.2)
+        plot(t,error_x(:,i),'r',LineWidth=1.2)
+        plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
+        plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end
 xlabel('Time (secs)','Interpreter','latex')
 sgtitle('States Error vs Time','Interpreter','latex')
 
+p = min(size(y_nom));
 var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
 figure(21);
 for i = 1:p
     subplot(p,1,i); hold on;
     if i == 1 || i == 3
-        plot(wrapToPi(innovation(i,:)),'g',LineWidth=1.2)
-        plot(wrapToPi(-2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1]))),'b--',LineWidth=1.2)
-        plot(wrapToPi(+2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1]))),'b--',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(error_y(i,:)),'g',LineWidth=1.2)
     else
-        plot(innovation(i,:),'g',LineWidth=1.2)
-        plot(-2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
-        plot(+2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)  
+        plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end
