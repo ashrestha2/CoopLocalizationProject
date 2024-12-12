@@ -278,15 +278,15 @@ const.x0 = x0;
 % IC 
 del_x0 = [0;1;0;0;0;0.1];
 %del_x0 = [0;0;0;0;0;0];
-P0 = 5 * eye(length(del_x0));
-%P0 = diag([5, 5, pi/4, 10, 10, pi/4]);
+%P0 = 5 * eye(length(del_x0));
+P0 = diag([5, 5, pi/4, 10, 10, pi/4]);
 % y_nom = findYnom(x_nom);
 T = length(ydata);
 endTime = 100;
 LKF_time = 0:const.deltaT:endTime;
 N = 10;
 
-% [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
+[epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
 
 % get noisy measurements and proces s
 [time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue,endTime);
@@ -342,18 +342,23 @@ const.x0 = x0;
 
 % Calculating error
 error_x = x_LKF_full' - x_noisy;
+error_x(:,3) = wrapToPi(error_x(:,3));
+error_x(:,6) = wrapToPi(error_x(:,6));
 error_y = y_LKF_total - y_noisy;
+error_y(1,:) = wrapToPi(error_y(1,:));
+error_y(3,:) = wrapToPi(error_y(3,:));
 
 n = length(x0);
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
 figure(20);
 for i = 1:n
     subplot(n,1,i); hold on;
-    plot(t,error_x(:,i),'r',LineWidth=1.2)
-    plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
-    plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     if i == 3 || i == 6
         plot(t,wrapToPi(error_x(:,i)),'r',LineWidth=1.2)
+        plot(t,wrapToPi(2*sigma(j,:)),'b--',LineWidth=1.2)
+        plot(t,wrapToPi(-2*sigma(j,:)),'b--',LineWidth=1.2)
+    else
+        plot(t,error_x(:,i),'r',LineWidth=1.2)
         plot(t,2*sigma(j,:),'b--',LineWidth=1.2)
         plot(t,-2*sigma(j,:),'b--',LineWidth=1.2)
     end
@@ -367,9 +372,10 @@ var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]
 figure(21);
 for i = 1:p
     subplot(p,1,i); hold on;
-    plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
     if i == 1 || i == 3
         plot(t(2:end),wrapToPi(error_y(i,:)),'g',LineWidth=1.2)
+    else
+        plot(t(2:end),error_y(i,:),'g',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end

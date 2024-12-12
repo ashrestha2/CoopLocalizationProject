@@ -38,7 +38,7 @@ function [x_plus_full, P_plus, Sk, y_calc_full, sigma, innovation] = LKF(del_x0,
     T = length(y_meas); % how many samples were taken
 
     %create some matricies to be used
-    I = eye(n);
+    I = eye(n,n);
 
     % running through the loop for every time step 
     for k = 1:T %k = time step
@@ -68,6 +68,9 @@ function [x_plus_full, P_plus, Sk, y_calc_full, sigma, innovation] = LKF(del_x0,
         del_x_plus(:,k+1) = del_x_minus(:,k+1) + K(:,:,k+1) * (innovation(:,k));
         P_plus(:,:,k+1) = (I - K(:,:,k+1) * H_tilde) * P_minus;
         sigma(:,k+1) = sqrt(diag(P_plus(:,:,k+1)));
+        % sigma(3,k+1) = wrapToPi(sigma(3,k+1));
+        % sigma(6,k+1) = wrapToPi(sigma(6,k+1));
+
         del_y_calc(:,k) = H_tilde * del_x_plus(:,k+1) + M_tilde * del_u(:,k);
     end
 
