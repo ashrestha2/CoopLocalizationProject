@@ -1,4 +1,4 @@
-function [x_plus, P_plus, innovations, S, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func)
+function [x_plus, P_plus, sigma, innovations, S, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func)
     % Extended Kalman Filter (EKF) with F_k output
     %
     % Outputs:
@@ -24,7 +24,12 @@ function [x_plus, P_plus, innovations, S, y_calc, F_matrices] = ekf(y_meas, x0, 
     % EKF Loop
     for k = 1:N
         % Prediction Step
-        x_pred = f(x_plus(:, k), u(:, k), dt); % Predict state
+        % x_pred = f(x_plus(:, k), u(:, k), dt); % Predict state
+        time_dist = [k-1 k]*dt;
+        options = odeset('RelTol',1E-12,'AbsTol',1E-12);
+        [t,X] = ode45(@(t,x) ugvEOM(t,x,u(:,k),zeros(6,1),0.5),time_dist,x_plus(:,k),options); 
+        x_pred = X(end,:)';
+
         F_k = F_func(x_plus(:, k), u(:, k), dt); % State transition Jacobian
         F_matrices(:, :, k) = F_k; % Store F_k for this step
         P_pred = F_k * P_plus(:, :, k) * F_k' + Q; % Predict covariance
@@ -44,6 +49,7 @@ function [x_plus, P_plus, innovations, S, y_calc, F_matrices] = ekf(y_meas, x0, 
         % Update state and covariance
         x_plus(:, k+1) = x_pred + K * innovations(:, k); % Updated state estimate
         P_plus(:, :, k+1) = (eye(state_dim) - K * H_k) * P_pred; % Updated covariance
+        sigma(:,k+1) = sqrt(diag(P_plus(:,:,k+1)));
         y_calc(:,k) = h(x_plus(:, k+1));
     end
 

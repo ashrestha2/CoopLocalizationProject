@@ -86,7 +86,7 @@ N = 1000; % Number of time steps
 t = 0:dt:endTime;
 
 % Call EKF
-[x_plus, P_plus, innovation, Sk, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func);
+[x_plus, P_plus, sigma, innovation, Sk, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func);
 
 n = length(x0);
 var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
@@ -125,13 +125,54 @@ end
 xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation','Interpreter','latex')
 
+%plot errors
+error_x = x_plus - x_noisy';
+error_y = y_calc - y_noisy;
+
+% plotting error with cov bounds 
+var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
+figure(20);
+for i = 1:n
+    subplot(n,1,i); hold on;
+    if i == 3 || i == 6
+        plot(wrapToPi(error_x(i,:)),'r',LineWidth=1.2)
+        plot(wrapToPi(2*sigma(i,:)),'b--',LineWidth=1.2)
+        plot(wrapToPi(-2*sigma(i,:)),'b--',LineWidth=1.2)
+    else
+        plot(error_x(i,:),'r',LineWidth=1.2)
+        plot(2*sigma(i,:),'b--',LineWidth=1.2)
+        plot(-2*sigma(i,:),'b--',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States Error vs Time','Interpreter','latex')
+
+var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
+figure(21);
+for i = 1:p
+    subplot(p,1,i); hold on;
+    if i == 1 || i == 3
+        plot(wrapToPi(innovation(i,:)),'g',LineWidth=1.2)
+        plot(wrapToPi(-2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1]))),'b--',LineWidth=1.2)
+        plot(wrapToPi(+2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1]))),'b--',LineWidth=1.2)
+    else
+        plot(innovation(i,:),'g',LineWidth=1.2)
+        plot(-2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+        plot(+2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)  
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements Error vs Time','Interpreter','latex')
+%% MOnte Carlo RUn
 num = 5;
 
 for i = 1:num
     % Generate true trajectory and measurements from system
     [t,xtrue,ytrue] = TMTSim(const,Qtrue,Rtrue,endTime);
 
-    [x_plus, P_plus, innovation, Sk, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func);
+    [x_plus, P_plus, sigma, innovation, Sk, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func);
     
     % xtrue(:,3) = wrapToPi(xtrue(:,3));
     % xtrue(:,6) = wrapToPi(xtrue(:,6));
@@ -206,40 +247,3 @@ ylim([0 15])
 % sgtitle('innovation')
 
 
-ex = reshape(error_x(:,end,:),[6,length(error_x)]);
-% plotting error with cov bounds 
-var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
-figure(20);
-for i = 1:n
-    subplot(n,1,i); hold on;
-    if i == 3 || i == 6
-        plot(wrapToPi(ex(i,end,:)),'r',LineWidth=1.2)
-        plot(wrapToPi(-2*sqrt(reshape(P_plus(i,i,2:end),[1,length(P_plus)-1]))),'b--',LineWidth=1.2)
-        plot(wrapToPi(+2*sqrt(reshape(P_plus(i,i,2:end),[1,length(P_plus)-1]))),'b--',LineWidth=1.2)
-    else
-        plot(ex(i,end,:),'r',LineWidth=1.2)
-        plot(-2*sqrt(reshape(P_plus(i,i,2:end),[1,length(P_plus)-1])),'b--',LineWidth=1.2)
-        plot(+2*sqrt(reshape(P_plus(i,i,2:end),[1,length(P_plus)-1])),'b--',LineWidth=1.2)
-    end
-    ylabel(var{i},'Interpreter','latex')
-end
-xlabel('Time (secs)','Interpreter','latex')
-sgtitle('States Error vs Time','Interpreter','latex')
-
-var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
-figure(21);
-for i = 1:p
-    subplot(p,1,i); hold on;
-    if i == 1 || i == 3
-        plot(wrapToPi(innovation(i,:)),'g',LineWidth=1.2)
-        plot(wrapToPi(-2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1]))),'b--',LineWidth=1.2)
-        plot(wrapToPi(+2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1]))),'b--',LineWidth=1.2)
-    else
-        plot(innovation(i,:),'g',LineWidth=1.2)
-        plot(-2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
-        plot(+2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)  
-    end
-    ylabel(var{i},'Interpreter','latex')
-end
-xlabel('Time (secs)','Interpreter','latex')
-sgtitle('Measurements Error vs Time','Interpreter','latex')
