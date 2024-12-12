@@ -68,14 +68,16 @@ w_a0 = pi/25; % angluar rate [rad/s]
 x0 = [xi_g0;eta_g0;theta_g0;xi_a0;eta_a0;theta_a0];
 const.x0 = x0;
 endTime = 100;
+P0 = diag([5, 5, pi/4, 10, 10, pi/4]);
+
+rng(100)
 
 [time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue,endTime);
 
 % Define parameters
 y_meas = y_noisy; % Measurements (5 x 100)
 x0 = [10; 0; pi/2; -60; 0; -pi/2]; % Initial state
-P0 = 5*eye(6); % Initial covariance
-Q = 10 * Qtrue; % Process noise covariance
+Q = 10 * eye(6); % Process noise covariance
 R = Rtrue; % Measurement noise covariance
 u = repmat([2; -pi/18; 12; pi/25], 1, 1000); % Constant control inputs
 dt = 0.1; % Sampling time
@@ -129,11 +131,18 @@ for i = 1:num
     [t,xtrue,ytrue] = TMTSim(const,Qtrue,Rtrue,endTime);
 
     [x_plus, P_plus, innovation, Sk, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func);
+    
+    % xtrue(:,3) = wrapToPi(xtrue(:,3));
+    % xtrue(:,6) = wrapToPi(xtrue(:,6));
+    % x_plus(3,:) = wrapToPi(x_plus(3,:));
+    % x_plus(6,:) = wrapToPi(x_plus(6,:));
 
     % Calculate NEES and NIS
     for j = 1: length(t)
-        NEES(i,j) = (xtrue(j,:) - x_plus(:,j)')*inv(P_plus(:,:,j))*(xtrue(j,:) - x_plus(:,j)')';
         error_x(:,i,j) = xtrue(j,:) - x_plus(:,j)';
+        error_x(3,i,j) = wrapToPi(error_x(3,i,j));
+        error_x(6,i,j) = wrapToPi(error_x(6,i,j));
+        NEES(i,j) = (error_x(:,i,j)')*inv(P_plus(:,:,j))*(error_x(:,i,j));
         if j > 2
             NIS(i,j-1) = (innovation(:,j-1))'*inv(Sk(:,:,j-1))*(innovation(:,j-1));
         end

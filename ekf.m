@@ -33,7 +33,8 @@ function [x_plus, P_plus, innovations, S, y_calc, F_matrices] = ekf(y_meas, x0, 
         H_k = H_func(x_pred); % Measurement Jacobian
         y_pred = h(x_pred); % Predicted measurement
         S(:,:,k) = H_k * P_pred * H_k' + R; % Innovation covariance
-        K = P_pred * H_k' / S(:,:,k); % Kalman gain
+        % K = P_pred * H_k' / S(:,:,k); % Kalman gain
+        K = P_pred * H_k' * inv(S(:,:,k)); % Kalman gain
 
         % Innovation (residual)
         innovations(:, k) = y_meas(:, k) - y_pred;
