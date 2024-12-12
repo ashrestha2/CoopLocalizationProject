@@ -22,7 +22,8 @@ function [x_plus_full, P_plus, Sk, y_calc_full, sigma, innovation] = LKF(del_x0,
 %   innovation??/?
 %   
     % works for NIS -- nice NIS
-    Q = Q * 100;
+    %Q = Q * 100;
+    Q = eye(6)*100;
     % changing for NEES 
     % Q = Q*2500000;
     % Q(3,3) = Q(3,3) * 3;
@@ -47,7 +48,8 @@ function [x_plus_full, P_plus, Sk, y_calc_full, sigma, innovation] = LKF(del_x0,
         %%% prediction step section 
         del_u(:,k) = zeros(4,1); %u(:,k+1) - u_nom(:,k+1); %WHERE THE HECK DOES UK+1 COME FROM -- 0???
         del_x_minus(:,k+1) = F_tilde * del_x_plus(:,k) + G_tilde * del_u(:,k);
-        P_minus = F_tilde * P_plus(:,:,k) * F_tilde' + omega_tilde * Q * omega_tilde';
+        % P_minus = F_tilde * P_plus(:,:,k) * F_tilde' + omega_tilde * Q * omega_tilde';
+        P_minus = F_tilde * P_plus(:,:,k) * F_tilde' + Q;
         Sk(:,:,k) = H_tilde*P_minus*H_tilde'+R;
         K(:,:,k+1) = P_minus * H_tilde' * inv(Sk(:,:,k));
     
@@ -62,6 +64,7 @@ function [x_plus_full, P_plus, Sk, y_calc_full, sigma, innovation] = LKF(del_x0,
         % wrap to pi 
         innovation(1,k) = wrapToPi(innovation(1,k));
         innovation(3,k) = wrapToPi(innovation(3,k));
+
         del_x_plus(:,k+1) = del_x_minus(:,k+1) + K(:,:,k+1) * (innovation(:,k));
         P_plus(:,:,k+1) = (I - K(:,:,k+1) * H_tilde) * P_minus;
         sigma(:,k+1) = sqrt(diag(P_plus(:,:,k+1)));

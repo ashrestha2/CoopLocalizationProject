@@ -277,7 +277,7 @@ P0 = diag([5, 5, pi/4, 10, 10, pi/4]);
 T = length(ydata);
 endTime = 100;
 LKF_time = 0:const.deltaT:endTime;
-N = 50;
+N = 10;
 
 [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x0,P0,x_nom,y_nom,@CT_to_DT,const,Qtrue,Rtrue,endTime);
 
@@ -291,6 +291,7 @@ N = 50;
 %[x_LKF_full, P_plus, innovation, y_LKF_total] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
 [x_LKF_full, P_plus, SK, y_LKF_total,sigma, innovation] = LKF(del_x0, P0, const, @CT_to_DT, x_nom, y_nom, y_noisy, Qtrue, Rtrue);
 
+%%%PLOT DEL Y TO SEE HWERE PERTURBATIONS GET LARGE
 
 % plotting 
 n = length(del_x0);

@@ -19,12 +19,25 @@ B = [
     0, 0, 0, 1
 ];
 
-C = [(x_nom(5) - x_nom(2))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2),     -(x_nom(4) - x_nom(1))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2),     -1, -(x_nom(5) - x_nom(2))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2),     (x_nom(4) - x_nom(1))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2),      0;
-    (x_nom(1) - x_nom(4))/sqrt((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),  (x_nom(2) - x_nom(5))/sqrt((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),   0, -(x_nom(1) - x_nom(4))/sqrt((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2), -(x_nom(2) - x_nom(5))/sqrt((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2), 0;
-    -(x_nom(2) - x_nom(5))/((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),     (x_nom(1) - x_nom(4))/((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),       0, (x_nom(2) - x_nom(5))/((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),      -(x_nom(1) - x_nom(4))/((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),     -1;
-    0, 0, 0, 1, 0, 0;
-    0, 0, 0, 0, 1, 0
-];
+% C = [(x_nom(5) - x_nom(2))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2),     -(x_nom(4) - x_nom(1))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2),     -1, -(x_nom(5) - x_nom(2))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2),     (x_nom(4) - x_nom(1))/((x_nom(4) - x_nom(1))^2 + (x_nom(5) - x_nom(2))^2),      0;
+%     (x_nom(1) - x_nom(4))/sqrt((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),  (x_nom(2) - x_nom(5))/sqrt((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),   0, -(x_nom(1) - x_nom(4))/sqrt((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2), -(x_nom(2) - x_nom(5))/sqrt((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2), 0;
+%     -(x_nom(2) - x_nom(5))/((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),     (x_nom(1) - x_nom(4))/((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),       0, (x_nom(2) - x_nom(5))/((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),      -(x_nom(1) - x_nom(4))/((x_nom(1) - x_nom(4))^2 + (x_nom(2) - x_nom(5))^2),     -1;
+%     0, 0, 0, 1, 0, 0;
+%     0, 0, 0, 0, 1, 0
+% ];
+
+n_g = x_nom(1);
+e_g = x_nom(2);
+theta_g = x_nom(3);
+n_a = x_nom(4);
+e_a = x_nom(5);
+theta_a = x_nom(6);
+
+C = [(n_a-n_g)/((e_a-e_g)^2+(n_a-n_g)^2), -(e_a-e_g)/((e_a-e_g)^2+(n_a-n_g)^2), -1, -(n_a-n_g)/((e_a-e_g)^2+(n_a-n_g)^2), (e_a-e_g)/((e_a-e_g)^2+(n_a-n_g)^2), 0;
+    (e_g-e_a)/(sqrt((e_g-e_a)^2+(n_g-n_a)^2)), (n_g-n_a)/(sqrt((e_g-e_a)^2+(n_g-n_a)^2)), 0, -(e_g-e_a)/(sqrt((e_g-e_a)^2+(n_g-n_a)^2)), -(n_g-n_a)/(sqrt((e_g-e_a)^2+(n_g-n_a)^2)), 0;
+    (n_g-n_a)/((e_g-e_a)^2+(n_g-n_a)^2), (e_g-e_a)/((e_g-e_a)^2+(n_g-n_a)^2), 0, (n_g-n_a)/((e_g-e_a)^2+(n_g-n_a)^2), (e_g-e_a)/((e_g-e_a)^2+(n_g-n_a)^2), -1;
+    0, 0, 0, 1, 0, 0; 
+    0, 0, 0, 0, 1, 0];
 
 D = zeros(size(C, 1), size(B, 2)); 
 
