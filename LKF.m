@@ -42,12 +42,12 @@ function [x_plus_full, P_plus, Sk, y_calc_full, sigma, innovation] = LKF(del_x0,
     % running through the loop for every time step 
     for k = 1:T %k = time step
         [F_tilde,G_tilde,H_tilde,M_tilde,omega_tilde] = DT_mat_func(x_nom(k,:),const.L,const.v_g0,const.v_a0,const.phi_g0,const.w_a0,const.deltaT);
-        try
-        check = chol(H_tilde);
-            disp('S is positive definite.');
-        catch
-            disp('S is NOT positive definite.');
-        end
+        % try
+        % check = chol(H_tilde);
+        %     disp('S is positive definite.');
+        % catch
+        %     disp('S is NOT positive definite.');
+        % end
         %%%%%%%%%%%%%%%%%%%%%%%%
         %%% prediction step section 
         del_u(:,k) = zeros(4,1); %u(:,k+1) - u_nom(:,k+1); %WHERE THE HECK DOES UK+1 COME FROM -- 0???
