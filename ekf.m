@@ -9,7 +9,7 @@ function [x_plus, P_plus, innovations, S, y_calc, F_matrices, sigma] = ekf(y_mea
 
     % Initialize dimensions
     state_dim = length(x0);
-    meas_dim = size(y_meas, 1);
+    meas_dim = size(y_meas, 1); 
 
     % Preallocate storage
     x_plus = zeros(state_dim, N); % Posterior state estimates
