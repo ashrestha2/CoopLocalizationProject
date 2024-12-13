@@ -314,7 +314,37 @@ title('NIS Estimation Results','FontSize',14)
 legend('NIS @ time k', 'r_1 bound', 'r_2 bound')
 ylim([0 15])
 
+%% Part 6
+% Load necessary data and initialize
+load('cooplocalization_finalproj_KFdata.mat');
+[x_LKF, P_plus, sigma_LKF, y_plus, delta_y_minus, S, innov_cov] = LFK(delta_x0,P0,const,Q,Rtrue,xnom,ynom,ydata);
+[x_EKF, P_plus, sigma_EKF, y_pluse, innovation, S, innov_cove] = EFK(x0,P0e,const,Qekf,Rtrue,ydata,h);
 
+% Plot the results
+figure;
+for i = 1:6
+    subplot(3, 2, i);
+    hold on;
+    if i == 3 || i == 6 
+      plot(t, wrapToPi(x_LKF(i, :)), 'b', t, wrapToPi(x_EKF(i, :)), 'r');
+      plot(t, wrapToPi(x_LKF(i, :)) + wrapToPi(2 * sigma_LKF(i, :)), 'b--', t, wrapToPi(x_LKF(i, :)) - wrapToPi(2 * sigma_LKF(i, :)), 'b--');
+      plot(t, wrapToPi(x_EKF(i, :) + 2 * sigma_EKF(i, :)), 'r--', t, wrapToPi(x_EKF(i, :) - 2 * sigma_EKF(i, :)), 'r--'); 
+    else 
+        plot(t, x_LKF(i, :), 'b', t, x_EKF(i, :), 'r');
+        plot(t, x_LKF(i, :) + 2 * sigma_LKF(i, :), 'b--', t, x_LKF(i, :) - 2 * sigma_LKF(i, :), 'b--');
+        plot(t, x_EKF(i, :) + 2 * sigma_EKF(i, :), 'r--', t, x_EKF(i, :) - 2 * sigma_EKF(i, :), 'r--');
+    end 
+    xlabel('Time [s]');
+    ylabel(['State ', num2str(i)]);
+    legend('LKF', 'EKF', 'LKF ±2σ', 'EKF ±2σ');
+    title(['State ', num2str(i), ' Estimation' 'using Ydata']);
+end
+
+% plot(t, x_LKF(i, :), 'b', t, x_EKF(i, :), 'r');
+% plot(t, x_LKF(i, :) + 2 * sigma_LKF(i, :), 'b--', t, x_LKF(i, :) - 2 * sigma_LKF(i, :), 'b--');
+% plot(t, x_EKF(i, :) + 2 * sigma_EKF(i, :), 'r--', t, x_EKF(i, :) - 2 * sigma_EKF(i, :), 'r--');
+
+%%
 function dx = dubinsEOM(t,x,w,const)
     theta_g = x(3);
     theta_a = x(6);
@@ -439,3 +469,5 @@ function [xnoise,ynoise] = TMTSim(t,x0,const,Qtrue,Rtrue,h)
         ynoise(:,i) = h(xnoise(:,i+1)) + v;
     end
 end
+
+
