@@ -270,7 +270,7 @@ const.x0 = x0;
 %%% LKF 
 % IC 
 del_x0 = [0;1;0;0;0;0.1];
-P0 = 100 * eye(length(del_x0));
+P0 = 10 * eye(length(del_x0));
 %P0 = diag([100, 100, 2*pi, 100, 100, 2*pi]);
 % y_nom = findYnom(x_nom);
 T = length(ydata);
@@ -383,7 +383,7 @@ end
 % b) 
 %%
 %%% Verifying TMT
-[tmont,Xmont,Ymont] = TMTSim(const,Qtrue,Rtrue);
+[tmont,Xmont,Ymont] = TMTSim(const,Qtrue,Rtrue,endTime);
 
 var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
 figure
