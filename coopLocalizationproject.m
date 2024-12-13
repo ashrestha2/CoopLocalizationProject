@@ -373,7 +373,7 @@ for ts = 1:length(t)
     invP(:,:,ts) = inv(P_plus(:,:,ts));
     NEES(ts) = error_x(ts,:)  * inv(P_plus(:,:,ts)) * error_x(ts,:)';
     if (ts >= 2)
-        NIS(ts) = error_y(:,ts-1)'  * inv(innovation(:,:,ts-1)) * error_y(:,ts-1);
+        NIS(ts) = innovation(:,ts-1)'  * inv(SK(:,:,ts-1)) * innovation(:,ts-1);
     end 
 end
 

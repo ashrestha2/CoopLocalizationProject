@@ -11,8 +11,11 @@ function [epsNEESbar,r1x,r2x,epsNISbar,r1y,r2y, NEES, NIS] = FindNISNESS(N,del_x
 
         % Calculate NEES and NIS
         for j = 1: length(t)
-            NEES(i,j) = (xtrue(j,:) - x_plus(:,j)')*inv(P_plus(:,:,j))*(xtrue(j,:) - x_plus(:,j)')';
-            error_x(:,i,j) = xtrue(j,:) - x_plus(:,j)';
+            error_x(j,:) = xtrue(j,:) - x_plus(:,j)';
+            error_x(j,3) = wrapToPi(error_x(j,3));
+            error_x(j,6) = wrapToPi(error_x(j,6));
+            NEES(i,j) = (error_x(j,:))*inv(P_plus(:,:,j))*(error_x(j,:)');
+            % NEES(i,j) = (xtrue(j,:) - x_plus(:,j)')*inv(P_plus(:,:,j))*(xtrue(j,:) - x_plus(:,j)')';
             if j > 2
                 NIS(i,j-1) = (innovation(:,j-1))'*inv(Sk(:,:,j-1))*(innovation(:,j-1));
             end

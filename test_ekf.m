@@ -3,6 +3,7 @@ clc
 close all
 
 load("cooplocalization_finalproj_KFdata.mat")
+rng(100)
 
 % State transition function (f)
 f = @(x, u, dt) [
@@ -74,8 +75,9 @@ endTime = 100;
 % Define parameters
 y_meas = y_noisy; % Measurements (5 x 100)
 x0 = [10; 0; pi/2; -60; 0; -pi/2]; % Initial state
-P0 = 10 * eye(6); % Initial covariance
-Q = 100 * Qtrue; % Process noise covariance % added 100
+P0 = diag([5, 5, pi/12, 10, 10, pi/12]);
+% P0 = 10 * eye(6); % Initial covariance
+Q = 10 * Qtrue; % Process noise covariance % added 100
 R = Rtrue; % Measurement noise covariance
 u = repmat([2; -pi/18; 12; pi/25], 1, 1000); % Constant control inputs
 dt = 0.1; % Sampling time
@@ -83,8 +85,17 @@ dt = 0.1; % Sampling time
 N = 1000; % Number of time steps
 t = 0:dt:endTime;
 
-% Call EKF
-[x_plus, P_plus, innovation, Sk, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func);
+time_steps = t;
+% initial state
+x0 = [xi_g0;eta_g0;theta_g0;xi_a0;eta_a0;theta_a0];
+% run ode45 to find the nominal trajectory at every time step
+[t_nom,x_nom] = ode45(@(t,y) FindNominal(t, y, v_g0, v_a0, const.L, phi_g0, w_a0),time_steps,x0,[]);
+
+% find the nominal measurements 
+y_nom = findYnom(x_nom(2:end,:));
+
+% Call EKF % testing with no noise
+[x_plus, P_plus, innovation, Sk, y_calc, F_matrices, sigma] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func);
 
 n = length(x0);
 var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
@@ -122,8 +133,86 @@ end
 xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation','Interpreter','latex')
 
-num = 5;
+n = length(x0);
+var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
+figure
+for i = 1:n
+    subplot(n,1,i)
+    hold on
+    if i == 3 || i == 6
+        plot(t,wrapToPi(x_plus(i,:)),'r',LineWidth=1.2)
+        plot(t,wrapToPi(x_noisy(:,i)),'b',LineWidth=1.2)
+    else
+        plot(t,x_plus(i,:),'r',LineWidth=1.2)
+        plot(t,x_noisy(:,i),'b',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States vs Time, Full Nonlinear Dynamics Simulation','Interpreter','latex')
 
+p = min(size(y_noisy));
+var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
+figure();
+
+for i = 1:p
+    subplot(p,1,i)
+    hold on
+    if i == 1 || i == 3
+        plot(t(2:end),wrapToPi(y_calc(i,:)),'r',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(y_noisy(i,:)),'b',LineWidth=1.2)
+    else
+        plot(t(2:end),y_calc(i,:),'r',LineWidth=1.2)
+        plot(t(2:end),y_noisy(i,:),'b',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements vs Time, Full Nonlinear Dynamics Simulation','Interpreter','latex')
+
+%plot errors
+error_x = x_plus - x_noisy';
+error_y = y_calc - y_noisy;
+
+% plotting error with cov bounds 
+var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
+figure(20);
+for i = 1:n
+    subplot(n,1,i); hold on;
+    if i == 3 || i == 6
+        plot(wrapToPi(error_x(i,:)),'r',LineWidth=1.2)
+        plot(wrapToPi(2*sigma(i,:)),'b--',LineWidth=1.2)
+        plot(wrapToPi(-2*sigma(i,:)),'b--',LineWidth=1.2)
+    else
+        plot(error_x(i,:),'r',LineWidth=1.2)
+        plot(2*sigma(i,:),'b--',LineWidth=1.2)
+        plot(-2*sigma(i,:),'b--',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('States Error vs Time','Interpreter','latex')
+
+var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
+figure(21);
+for i = 1:p
+    subplot(p,1,i); hold on;
+    if i == 1 || i == 3
+        plot(wrapToPi(innovation(i,:)),'g',LineWidth=1.2)
+        plot(wrapToPi(-2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1]))),'b--',LineWidth=1.2)
+        plot(wrapToPi(+2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1]))),'b--',LineWidth=1.2)
+    else
+        plot(innovation(i,:),'g',LineWidth=1.2)
+        plot(-2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)
+        plot(+2*sqrt(reshape(Sk(i,i,2:end),[1,length(Sk)-1])),'b--',LineWidth=1.2)  
+    end
+    ylabel(var{i},'Interpreter','latex')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements Error vs Time','Interpreter','latex')
+
+
+num = 5;
 for i = 1:num
     % Generate true trajectory and measurements from system
     [t,xtrue,ytrue] = TMTSim(const,Qtrue,Rtrue,endTime);
@@ -132,8 +221,10 @@ for i = 1:num
 
     % Calculate NEES and NIS
     for j = 1: length(t)
-        NEES(i,j) = (xtrue(j,:) - x_plus(:,j)')*inv(P_plus(:,:,j))*(xtrue(j,:) - x_plus(:,j)')';
-        error_x(:,i,j) = xtrue(j,:) - x_plus(:,j)';
+        error_x1(j,:) = xtrue(j,:) - x_plus(:,j)';
+        error_x1(j,3) = wrapToPi(error_x1(j,3));
+        error_x1(j,6) = wrapToPi(error_x1(j,6));
+        NEES(i,j) = (error_x1(j,:))*inv(P_plus(:,:,j))*(error_x1(j,:)');
         if j > 2
             NIS(i,j-1) = (innovation(:,j-1))'*inv(Sk(:,:,j-1))*(innovation(:,j-1));
         end
@@ -143,9 +234,9 @@ end
 % NEES Test:
 epsNEESbar = mean(NEES,1);
 alphaNEES = 0.05;
-Nnx = N*n;
-r1x = chi2inv(alphaNEES/2, Nnx)./N;
-r2x = chi2inv(1-alphaNEES/2, Nnx)./N;
+Nnx = num*n;
+r1x = chi2inv(alphaNEES/2, Nnx)./num;
+r2x = chi2inv(1-alphaNEES/2, Nnx)./num;
 
 figure
 plot(epsNEESbar,'ro','MarkerSize',6,'LineWidth',2),hold on
@@ -159,9 +250,9 @@ ylim([0 8])
 
 epsNISbar = mean(NIS,1);
 alphaNIS = 0.01;
-Nny = N*p;
-r1y = chi2inv(alphaNIS/2,Nny)./N;
-r2y = chi2inv(1-alphaNIS/2,Nny)./N;
+Nny = num*p;
+r1y = chi2inv(alphaNIS/2,Nny)./num;
+r2y = chi2inv(1-alphaNIS/2,Nny)./num;
 
 figure
 plot(epsNISbar,'bo','MarkerSize',6,'LineWidth',2),hold on
