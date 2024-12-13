@@ -317,8 +317,8 @@ ylim([0 15])
 %% Part 6
 % Load necessary data and initialize
 load('cooplocalization_finalproj_KFdata.mat');
-[x_LKF, P_plus, sigma_LKF, y_plus, delta_y_minus, S, innov_cov] = LFK(delta_x0,P0,const,Q,Rtrue,xnom,ynom,ydata);
-[x_EKF, P_plus, sigma_EKF, y_pluse, innovation, S, innov_cove] = EFK(x0,P0e,const,Qekf,Rtrue,ydata,h);
+[x_LKF, P_plus, sigma_LKF, y_plus, delta_y_minus, S, innov_cov] = LFK(delta_x0,P0,const,Q,Rtrue,xnom,ynom,ydata(:,2:end));
+[x_EKF, P_plus, sigma_EKF, y_pluse, innovation, S, innov_cove] = EFK(x0,P0e,const,Qekf,Rtrue,ydata(:,2:end),h);
 
 % Plot the results
 figure;
@@ -328,7 +328,7 @@ for i = 1:6
     if i == 3 || i == 6 
       plot(t, wrapToPi(x_LKF(i, :)), 'b', t, wrapToPi(x_EKF(i, :)), 'r');
       plot(t, wrapToPi(x_LKF(i, :)) + wrapToPi(2 * sigma_LKF(i, :)), 'b--', t, wrapToPi(x_LKF(i, :)) - wrapToPi(2 * sigma_LKF(i, :)), 'b--');
-      plot(t, wrapToPi(x_EKF(i, :) + 2 * sigma_EKF(i, :)), 'r--', t, wrapToPi(x_EKF(i, :) - 2 * sigma_EKF(i, :)), 'r--'); 
+      plot(t, wrapToPi(x_EKF(i, :)) + wrapToPi(2 * sigma_EKF(i, :)), 'r--', t, wrapToPi(x_EKF(i, :) - 2 * sigma_EKF(i, :)), 'r--'); 
     else 
         plot(t, x_LKF(i, :), 'b', t, x_EKF(i, :), 'r');
         plot(t, x_LKF(i, :) + 2 * sigma_LKF(i, :), 'b--', t, x_LKF(i, :) - 2 * sigma_LKF(i, :), 'b--');
