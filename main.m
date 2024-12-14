@@ -314,6 +314,43 @@ title('NIS Estimation Results','FontSize',14)
 legend('NIS @ time k', 'r_1 bound', 'r_2 bound')
 ylim([0 15])
 
+%% plot ekf
+var = {'$\xi_{g}$ [m]','$\eta_{g}$ [m]','$\theta_{g}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]','$\theta_{a}$ [rads]'};
+figure
+for i = 1:n
+    subplot(n,1,i)
+    hold on
+    if i == 3 || i == 6
+        plot(t,wrapToPi(x_pluse(i,:)),'k',LineWidth=1.2)
+        plot(t,wrapToPi(xnoise(i,:)),'m',LineWidth=1.2)
+    else
+        plot(t,x_pluse(i,:),'k',LineWidth=1.2)
+        plot(t,xnoise(i,:),'m',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+    legend('EKF', 'Noise')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('EKF States vs Time with Noise','Interpreter','latex')
+
+var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
+figure
+for i = 1:p
+    subplot(p,1,i)
+    hold on
+    if i == 1 || i == 3
+        plot(t(2:end),wrapToPi(y_pluse(i,:)),'k',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(ynoise(i,:)),'m',LineWidth=1.2)
+    else
+        plot(t(2:end),y_pluse(i,:),'k',LineWidth=1.2)
+        plot(t(2:end),ynoise(i,:),'m',LineWidth=1.2)
+    end
+    ylabel(var{i},'Interpreter','latex')
+    legend('EKF', 'Noise')
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('EKF Measurements vs Time with Noise','Interpreter','latex')
+
 %% Part 6
 % Load necessary data and initialize
 load('cooplocalization_finalproj_KFdata.mat');
@@ -339,10 +376,6 @@ for i = 1:6
     legend('LKF', 'EKF', 'LKF ±2σ', 'EKF ±2σ');
     title(['State ', num2str(i), ' Estimation' 'using Ydata']);
 end
-
-% plot(t, x_LKF(i, :), 'b', t, x_EKF(i, :), 'r');
-% plot(t, x_LKF(i, :) + 2 * sigma_LKF(i, :), 'b--', t, x_LKF(i, :) - 2 * sigma_LKF(i, :), 'b--');
-% plot(t, x_EKF(i, :) + 2 * sigma_EKF(i, :), 'r--', t, x_EKF(i, :) - 2 * sigma_EKF(i, :), 'r--');
 
 %%
 function dx = dubinsEOM(t,x,w,const)
