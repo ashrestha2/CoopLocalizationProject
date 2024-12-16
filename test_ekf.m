@@ -69,16 +69,15 @@ x0 = [xi_g0;eta_g0;theta_g0;xi_a0;eta_a0;theta_a0];
 const.x0 = x0;
 endTime = 100;
 
-[time_iter,x_noisy, y_noisy] = TMTSim(const, Qtrue,Rtrue,endTime);
-
 % Define parameters
-y_meas = y_noisy; % Measurements (5 x 100)
 x0 = [10; 0; pi/2; -60; 0; -pi/2]; % Initial state
 P0 = 10 * eye(6); % Initial covariance
 Q = 100 * Qtrue; % Process noise covariance % added 100
 R = Rtrue; % Measurement noise covariance
 u = repmat([2; -pi/18; 12; pi/25], 1, 1000); % Constant control inputs
 dt = 0.1; % Sampling time
+[time_iter,x_noisy, y_noisy] = TMTSim(const,Qtrue,Rtrue,endTime,P0);
+y_meas = y_noisy; % Measurements (5 x 100)
 
 N = 1000; % Number of time steps
 t = 0:dt:endTime;
@@ -126,7 +125,7 @@ num = 5;
 
 for i = 1:num
     % Generate true trajectory and measurements from system
-    [t,xtrue,ytrue] = TMTSim(const,Qtrue,Rtrue,endTime);
+    [t,xtrue,ytrue] = TMTSim(const,Qtrue,Rtrue,endTime,P0);
 
     [x_plus, P_plus, innovation, Sk, y_calc, F_matrices] = ekf(y_meas, x0, P0, Q, R, u, dt, N, f, h, F_func, H_func);
 

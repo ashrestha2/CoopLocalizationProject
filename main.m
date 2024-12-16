@@ -360,29 +360,91 @@ sgtitle('EKF Measurements vs Time with Noise','Interpreter','latex')
 
 %% Part 6
 % Load necessary data and initialize
+%%% SS EOM
+% State transition function (f)
+f = @(x, u, dt) [
+    x(1) + u(1)*cos(x(3))*dt;
+    x(2) + u(1)*sin(x(3))*dt;
+    x(3) + (u(1)/0.5)*tan(u(2))*dt;
+    x(4) + u(3)*cos(x(6))*dt;
+    x(5) + u(3)*sin(x(6))*dt;
+    x(6) + u(4)*dt;
+];
+
+% Measurement function (h)
+h = @(x) [
+    atan2(x(5) - x(2), x(4) - x(1)) - x(3);
+    sqrt((x(4) - x(1))^2 + (x(5) - x(2))^2);
+    atan2(x(2) - x(5), x(1) - x(4)) - x(6);
+    x(4);
+    x(5);
+];
+
+% State transition Jacobian (F_func)
+F_func = @(x, u, dt) [
+    1, 0, -u(1)*sin(x(3))*dt, 0, 0, 0;
+    0, 1,  u(1)*cos(x(3))*dt, 0, 0, 0;
+    0, 0,  1,                 0, 0, 0;
+    0, 0,  0,                 1, 0, -u(3)*sin(x(6))*dt;
+    0, 0,  0,                 0, 1,  u(3)*cos(x(6))*dt;
+    0, 0,  0,                 0, 0,  1
+];
+
+% Measurement Jacobian (H_func)
+H_func = @(x) [
+    (x(5) - x(2))/((x(4) - x(1))^2 + (x(5) - x(2))^2),     -(x(4) - x(1))/((x(4) - x(1))^2 + (x(5) - x(2))^2),     -1, -(x(5) - x(2))/((x(4) - x(1))^2 + (x(5) - x(2))^2),     (x(4) - x(1))/((x(4) - x(1))^2 + (x(5) - x(2))^2),      0;
+    (x(1) - x(4))/sqrt((x(1) - x(4))^2 + (x(2) - x(5))^2),  (x(2) - x(5))/sqrt((x(1) - x(4))^2 + (x(2) - x(5))^2),   0, -(x(1) - x(4))/sqrt((x(1) - x(4))^2 + (x(2) - x(5))^2), -(x(2) - x(5))/sqrt((x(1) - x(4))^2 + (x(2) - x(5))^2), 0;
+    -(x(2) - x(5))/((x(1) - x(4))^2 + (x(2) - x(5))^2),     (x(1) - x(4))/((x(1) - x(4))^2 + (x(2) - x(5))^2),       0, (x(2) - x(5))/((x(1) - x(4))^2 + (x(2) - x(5))^2),      -(x(1) - x(4))/((x(1) - x(4))^2 + (x(2) - x(5))^2),     -1;
+    0, 0, 0, 1, 0, 0;
+    0, 0, 0, 0, 1, 0
+    ];
+
 load('cooplocalization_finalproj_KFdata.mat');
+P0 = diag([20,20,0.001,20,20,0.001]);
+Q = 10*P0;%diag([0.5,0.5,0.01,0.5,0.5,0.01]); % Process noise covariance
+P0e = diag([20, 20, pi/12, 10, 10, pi/12]);
+Q = 0.08*P0;
+u = repmat([2; -pi/18; 12; pi/25], 1, 1000); % Constant control inputs
+
 [x_LKF, P_plus, sigma_LKF, y_plus, delta_y_minus, S, innov_cov] = LFK(delta_x0,P0,const,Q,Rtrue,xnom,ynom,ydata(:,2:end));
-[x_EKF, P_plus, sigma_EKF, y_pluse, innovation, S, innov_cove] = EFK(x0,P0e,const,Qekf,Rtrue,ydata(:,2:end),h);
+[x_EKF, P_plus, innovation, Sk, y_plus, F_matrices] = ekf(ydata(:,2:end), x0, P0e, Qekf, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
+
+for i = 1: length(t)
+    sigma_EKF(:,i) = sqrt(diag(P_plus(:,:,i)));
+end
 
 % Plot the results
 figure;
 for i = 1:6
     subplot(3, 2, i);
     hold on;
-    if i == 3 || i == 6 
-      plot(t, wrapToPi(x_LKF(i, :)), 'b', t, wrapToPi(x_EKF(i, :)), 'r');
-      plot(t, wrapToPi(x_LKF(i, :)) + wrapToPi(2 * sigma_LKF(i, :)), 'b--', t, wrapToPi(x_LKF(i, :)) - wrapToPi(2 * sigma_LKF(i, :)), 'b--');
-      plot(t, wrapToPi(x_EKF(i, :)) + wrapToPi(2 * sigma_EKF(i, :)), 'r--', t, wrapToPi(x_EKF(i, :) - 2 * sigma_EKF(i, :)), 'r--'); 
-    else 
-        plot(t, x_LKF(i, :), 'b', t, x_EKF(i, :), 'r');
-        plot(t, x_LKF(i, :) + 2 * sigma_LKF(i, :), 'b--', t, x_LKF(i, :) - 2 * sigma_LKF(i, :), 'b--');
-        plot(t, x_EKF(i, :) + 2 * sigma_EKF(i, :), 'r--', t, x_EKF(i, :) - 2 * sigma_EKF(i, :), 'r--');
-    end 
+
+    if i == 3 || i == 6
+        % Plot LKF and EKF states for angles with ±2σ
+        h1 = plot(t, wrapToPi(x_LKF(i, :)), 'b');
+        h2 = plot(t, wrapToPi(x_EKF(i, :)), 'r');
+        h3 = plot(t, wrapToPi(x_LKF(i, :)) + wrapToPi(2 * sigma_LKF(i, :)), 'b--');
+        h4 = plot(t, wrapToPi(x_LKF(i, :)) - wrapToPi(2 * sigma_LKF(i, :)), 'b--');
+        h5 = plot(t, wrapToPi(x_EKF(i, :)) + wrapToPi(2 * sigma_EKF(i, :)), 'r--');
+        h6 = plot(t, wrapToPi(x_EKF(i, :)) - wrapToPi(2 * sigma_EKF(i, :)), 'r--');
+    else
+        % Plot LKF and EKF states with ±2σ
+        h1 = plot(t, x_LKF(i, :), 'b');
+        h2 = plot(t, x_EKF(i, :), 'r');
+        h3 = plot(t, x_LKF(i, :) + 2 * sigma_LKF(i, :), 'b--');
+        h4 = plot(t, x_LKF(i, :) - 2 * sigma_LKF(i, :), 'b--');
+        h5 = plot(t, x_EKF(i, :) + 2 * sigma_EKF(i, :), 'r--');
+        h6 = plot(t, x_EKF(i, :) - 2 * sigma_EKF(i, :), 'r--');
+    end
+
     xlabel('Time [s]');
     ylabel(['State ', num2str(i)]);
-    legend('LKF', 'EKF', 'LKF ±2σ', 'EKF ±2σ');
-    title(['State ', num2str(i), ' Estimation' 'using Ydata']);
+
+    % For other states, include LKF, EKF, and their ±2σ bounds
+    legend([h1, h2, h3, h5], {'LKF', 'EKF', 'LKF ±2σ', 'EKF ±2σ'});
+    title(['State ', num2str(i), ' Estimation using Ydata']);
 end
+
 
 %%
 function dx = dubinsEOM(t,x,w,const)

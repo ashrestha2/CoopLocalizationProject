@@ -1,8 +1,9 @@
-function [time_iter,x_array,y] = TMTSim(const,Qtrue,Rtrue,endTime)
+function [time_iter,x_array,y] = TMTSim(const,Qtrue,Rtrue,endTime,P0)
+    rng(100)
     t_int = 0:const.deltaT:endTime;
     u = [const.v_g0;const.phi_g0;const.v_a0;const.w_a0];
     perturb_x0 = [0;1;0;0;0;0.1];
-    x_array(1,:) = const.x0 + perturb_x0;
+    x_array(1,:) = const.x0 + mvnrnd(perturb_x0, P0)';
     time_iter(1) = 0;
     for i = 1: length(t_int) - 1
         dt = [t_int(i) t_int(i+1)];

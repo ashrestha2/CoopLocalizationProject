@@ -69,13 +69,20 @@ for i = 1: length(t)-1
     ynoise(:,i) = h(xnoise(:,i+1)) + v;
 end
 
+% Tuning 
 P0 = diag([5, 5, pi/12, 10, 10, pi/12]);
 Q = 80*eye(6);
 
 [x_plus, P_plus, sigma, y_plus, delta_y_minus, S, innov_cov] = LFK(delta_x0,P0,const,Q,Rtrue,xnom,ynom,ynoise);
 
-P0e = 2*diag([5, 5, pi/12, 10, 10, pi/12]);
-Qekf = 0.01*P0e;
+P0e = 4*diag([5, 5, pi/12, 10, 10, pi/12]);
+% Initialize Qekf to zeros and explicitly adjust the first and second diagonal elements
+Qekf = zeros(size(P0e));
+Qekf(1,1) = 10 * P0e(1,1); % Adjust first condition
+Qekf(2,2) = 0.05 * P0e(2,2); % Adjust second condition
+Qekf(4,4) = 0.01 * P0e(4,4); % Adjust first condition
+Qekf(5,5) = 0.01 * P0e(5,5); % Adjust second condition
+
 [x_pluse, P_plus, sigmae, y_pluse, innovation, S, innov_cove] = EFK(x0,P0e,const,Qekf,Rtrue,ynoise,h);
 
 error_x = x_plus - xnoise;
@@ -354,8 +361,13 @@ sgtitle('EKF Measurements vs Time with Noise','Interpreter','latex')
 %% Part 6
 % Load necessary data and initialize
 load('cooplocalization_finalproj_KFdata.mat');
+P0 = diag([20,20,0.001,20,20,0.001]);
+Q = 10*P0;%diag([0.5,0.5,0.01,0.5,0.5,0.01]); % Process noise covariance
+P0e = diag([20, 20, pi/12, 10, 10, pi/12]);
+Qekf = 0.08*P0;
+u = repmat([2; -pi/18; 12; pi/25], 1, 1000); % Constant control inputs
 [x_LKF, P_plus, sigma_LKF, y_plus, delta_y_minus, S, innov_cov] = LFK(delta_x0,P0,const,Q,Rtrue,xnom,ynom,ydata(:,2:end));
-[x_EKF, P_plus, sigma_EKF, y_pluse, innovation, S, innov_cove] = EFK(x0,P0e,const,Qekf,Rtrue,ydata(:,2:end),h);
+[x_plus, P_plus, innovation, Sk, y_plus, F_matrices] = ekf(ynoise, x0, P0e, Qekf, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
 
 % Plot the results
 figure;
