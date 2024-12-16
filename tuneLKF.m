@@ -34,12 +34,20 @@ const.endTime = 100;
 t = 0:deltaT:const.endTime;
 
 %% SIMULATION AND ERROR ANALYSIS OF TMT AND LKF 
-
+% close all;
 rng(100) % Set initial seed for tuning
 
 %%%%%%%%%%% TUNING PARAMETERS %%%%%%%%%%%%%%%%%
-P0 = diag([20,20,0.001,20,20,0.001]);
+% P0 = diag([20,20,0.001,20,20,0.001]);
+% P0 = diag([1000,1000,0.001,20,20,0.001]); % tune 1 & 2
+% P0 = diag([1000,1000,0.001,100,100,0.001]); % tune 3 & 6
+% P0 = diag([1000,1000,0.001,250,250,0.001]); % tune 4 & 5
+% P0 = diag([5,5,0.001,5,5,0.001]);
+P0 = diag([20,20,0.05,20,20,0.05]);
 Q = 10*P0;%diag([0.5,0.5,0.01,0.5,0.5,0.01]); % Process noise covariance
+% Q = diag([2,2,0.01,2,2,0.01]); % starting
+% Q = diag([50,50,0.01,2,2,0.01]); % tune 1&2
+% Q = diag([50,50,0.01,5,5,0.01]); % tune 4&5
 xnom0 = [xi_g0;eta_g0;theta_g0;xi_a0;eta_a0;theta_a0];
 delta_x0 = [0.1;0.1;0.1;0.1;0.1;0.1];%[0;1;0;0;0;0.1];
 n = length(xnom0);
@@ -117,7 +125,7 @@ xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements vs Time','Interpreter','latex')
 
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
-figure(3)
+figure()
 for i = 1:n
     subplot(n,1,i); hold on;
     plot(t,error_x(i,:),'r',LineWidth=1.2)
@@ -125,12 +133,12 @@ for i = 1:n
     plot(t,-2*sigma(i,:),'b--',LineWidth=1.2)
     if i == 3 || i == 6
         plot(t,wrapToPi(error_x(i,:)),'r',LineWidth=1.2)
-        plot(t,wrapToPi(2*sigma(i,:)),'b--',LineWidth=1.2)
-        plot(t,wrapToPi(-2*sigma(i,:)),'b--',LineWidth=1.2)
+        plot(t,wrapToPi(2*sigma(i,:)),'k--',LineWidth=1.2)
+        plot(t,wrapToPi(-2*sigma(i,:)),'k--',LineWidth=1.2)
     else
         plot(t,error_x(i,:),'r',LineWidth=1.2)
-        plot(t,2*sigma(i,:),'b--',LineWidth=1.2)
-        plot(t,-2*sigma(i,:),'b--',LineWidth=1.2)
+        plot(t,2*sigma(i,:),'k--',LineWidth=1.2)
+        plot(t,-2*sigma(i,:),'k--',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end
@@ -138,17 +146,17 @@ xlabel('Time (secs)','Interpreter','latex')
 sgtitle('LKF States Error vs Time','Interpreter','latex')
 
 var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
-figure(4)
+figure()
 for i = 1:p
     subplot(p,1,i); hold on;
     if i == 1 || i == 3
-        plot(t(2:end),wrapToPi(delta_y_minus(i,:)),'g',LineWidth=1.2)
-        plot(t(2:end),wrapToPi(2*innov_cov(i,:)),'b--',LineWidth=1.2)
-        plot(t(2:end),wrapToPi(-2*innov_cov(i,:)),'b--',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(delta_y_minus(i,:)),'b',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(2*innov_cov(i,:)),'k--',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(-2*innov_cov(i,:)),'k--',LineWidth=1.2)
     else
-        plot(t(2:end),delta_y_minus(i,:),'g',LineWidth=1.2)
-        plot(t(2:end),2*innov_cov(i,:),'b--',LineWidth=1.2)
-        plot(t(2:end),-2*innov_cov(i,:),'b--',LineWidth=1.2)
+        plot(t(2:end),delta_y_minus(i,:),'b',LineWidth=1.2)
+        plot(t(2:end),2*innov_cov(i,:),'k--',LineWidth=1.2)
+        plot(t(2:end),-2*innov_cov(i,:),'k--',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end
@@ -157,7 +165,7 @@ sgtitle('LKF Measurements Error vs Time','Interpreter','latex')
 
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
 
-%% NEES AND NIS CHI-SQUARE TEST
+%%% NEES AND NIS CHI-SQUARE TEST
 N = 50; % Number of Monte Carlo Simulations
 
 for i = 1:N
@@ -179,14 +187,14 @@ for i = 1:N
     end
 end
 
-% NEES Test
+%%% NEES Test
 epsNEESbar = mean(NEES,1);
 alphaNEES = 0.05;
 Nnx = N*n;
 r1x = chi2inv(alphaNEES/2, Nnx)./N;
 r2x = chi2inv(1-alphaNEES/2, Nnx)./N;
 
-figure(5)
+figure()
 plot(epsNEESbar,'ro','MarkerSize',6,'LineWidth',2),hold on
 plot(r1x*ones(size(epsNEESbar)),'r--','LineWidth',2)
 plot(r2x*ones(size(epsNEESbar)),'r--','LineWidth',2)
@@ -202,7 +210,7 @@ Nny = N*p;
 r1y = chi2inv(alphaNIS/2,Nny)./N;
 r2y = chi2inv(1-alphaNIS/2,Nny)./N;
 
-figure(6)
+figure()
 plot(epsNISbar,'bo','MarkerSize',6,'LineWidth',2),hold on
 plot(r1y*ones(size(epsNISbar)),'b--','LineWidth',2)
 plot(r2y*ones(size(epsNISbar)),'b--','LineWidth',2)
@@ -323,7 +331,7 @@ end
 function [xnoise,ynoise] = TMTSim(t,x0,delta_x0,const,Qtrue,Rtrue,h,P0)
     rng(100)
     n = length(x0);
-    xnoise(:,1) = x0 + mvnrnd(delta_x0,P0)';
+    xnoise(:,1) = mvnrnd(x0,P0)';
     p = 5;
     for i = 1: length(t)-1
         % Nonlinear Dynamics with perturbation + noise

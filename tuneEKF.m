@@ -35,11 +35,17 @@ t = 0:deltaT:const.endTime;
 
 %% SIMULATION AND ERROR ANALYSIS OF TMT AND EKF 
 
-rng(100) % Set initial seed for tuning
+% rng(100) % Set initial seed for tuning
 
 %%%%%%%%%%% TUNING PARAMETERS %%%%%%%%%%%%%%%%%
 P0 = diag([20, 20, pi/12, 10, 10, pi/12]);
-Q = 0.08*P0;
+% P0 = diag([20, 20, pi/12, 10, 10, pi/12]); %tuning 1&2
+% P0 = diag([20, 20, pi/12, 25, 25, pi/12]); %tuning 4&5
+% P0 = diag([20, 20, pi/6, 25, 25, pi/6]); %tuning 3&6
+% Q = 0.08*P0;
+% Q = diag([1.6,1.6,0.05,2,2,0.05]);
+Q = diag([5,5,0.1,5,5,0.1]);
+% Q = diag([0.1,0.1,0.01,0.1,0.1,0.01]);
 xnom0 = [xi_g0;eta_g0;theta_g0;xi_a0;eta_a0;theta_a0];
 delta_x0 = [0;1;0;0;0;0.1];
 n = length(xnom0);
@@ -108,7 +114,9 @@ end
 
 
 %%% Simulate LKF and calculate error
-[x_plus, P_plus, innovation, Sk, y_plus, F_matrices] = ekf(ynoise, x0, P0, Q, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
+% [x_plus, P_plus, innovation, Sk, y_plus, F_matrices] = ekf(ynoise, x0, P0, Q, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
+[x_plus, P_plus, sigma, y_plus, innovation, Sk, innov_cov] = EFK(x0,P0,const,Q,Rtrue,ynoise,h);
+
 error_x = x_plus - xnoise;
 
 for i = 1: length(t)
@@ -155,54 +163,56 @@ xlabel('Time (secs)','Interpreter','latex')
 sgtitle('Measurements vs Time','Interpreter','latex')
 
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
-figure(3)
+figure()
 for i = 1:n
     subplot(n,1,i); hold on;
     plot(t,error_x(i,:),'r',LineWidth=1.2)
-    plot(t,2*sigma(i,:),'b--',LineWidth=1.2)
-    plot(t,-2*sigma(i,:),'b--',LineWidth=1.2)
+    plot(t,2*sigma(i,:),'k--',LineWidth=1.2)
+    plot(t,-2*sigma(i,:),'k--',LineWidth=1.2)
     if i == 3 || i == 6
         plot(t,wrapToPi(error_x(i,:)),'r',LineWidth=1.2)
-        plot(t,wrapToPi(2*sigma(i,:)),'b--',LineWidth=1.2)
-        plot(t,wrapToPi(-2*sigma(i,:)),'b--',LineWidth=1.2)
+        plot(t,wrapToPi(2*sigma(i,:)),'k--',LineWidth=1.2)
+        plot(t,wrapToPi(-2*sigma(i,:)),'k--',LineWidth=1.2)
     else
         plot(t,error_x(i,:),'r',LineWidth=1.2)
-        plot(t,2*sigma(i,:),'b--',LineWidth=1.2)
-        plot(t,-2*sigma(i,:),'b--',LineWidth=1.2)
+        plot(t,2*sigma(i,:),'k--',LineWidth=1.2)
+        plot(t,-2*sigma(i,:),'k--',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end
 xlabel('Time (secs)','Interpreter','latex')
-sgtitle('LKF States Error vs Time','Interpreter','latex')
+sgtitle('EKF States Error vs Time','Interpreter','latex')
 
 var = {'$e_{\gamma_{ag}}$ [rads]','$e_{\rho_{g}}$ [m]','$e_{\gamma_{ga}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]'};
-figure(4)
+figure()
 for i = 1:p
     subplot(p,1,i); hold on;
     if i == 1 || i == 3
-        plot(t(2:end),wrapToPi(innovation(i,:)),'g',LineWidth=1.2)
-        plot(t(2:end),wrapToPi(2*innov_cov(i,:)),'b--',LineWidth=1.2)
-        plot(t(2:end),wrapToPi(-2*innov_cov(i,:)),'b--',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(innovation(i,:)),'b',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(2*innov_cov(i,:)),'k--',LineWidth=1.2)
+        plot(t(2:end),wrapToPi(-2*innov_cov(i,:)),'k--',LineWidth=1.2)
     else
-        plot(t(2:end),innovation(i,:),'g',LineWidth=1.2)
-        plot(t(2:end),2*innov_cov(i,:),'b--',LineWidth=1.2)
-        plot(t(2:end),-2*innov_cov(i,:),'b--',LineWidth=1.2)
+        plot(t(2:end),innovation(i,:),'b',LineWidth=1.2)
+        plot(t(2:end),2*innov_cov(i,:),'k--',LineWidth=1.2)
+        plot(t(2:end),-2*innov_cov(i,:),'k--',LineWidth=1.2)
     end
     ylabel(var{i},'Interpreter','latex')
 end
 xlabel('Time (secs)','Interpreter','latex')
-sgtitle('LKF Measurements Error vs Time','Interpreter','latex')
+sgtitle('EKF Measurements Error vs Time','Interpreter','latex')
 
 var = {'$e_{\xi_{g}}$ [m]','$e_{\eta_{g}}$ [m]','$e_{\theta_{g}}$ [rads]','$e_{\xi_{a}}$ [m]','$e_{\eta_{a}}$ [m]','$e_{\theta_{a}}$ [rads]'};
 
-%% NEES AND NIS CHI-SQUARE TEST
+%%% NEES AND NIS CHI-SQUARE TEST
 N = 50; % Number of Monte Carlo Simulations
 
 for i = 1:N
     [xnoise,ynoise] = TMTSim(t,x0,delta_x0,const,Qtrue,Rtrue,h,P0);
     
-    [x_plus, P_plus, innovation, S, y_calc, F_matrices] = ekf(ynoise, x0+delta_x0, P0, Q, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
-    
+    % [x_plus, P_plus, innovation, S, y_calc, F_matrices] = ekf(ynoise, x0_delta_x0, P0, Q, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
+    % [x_plus, P_plus, innovation, S, y_calc, F_matrices] = ekf(ynoise, x0+delta_x0, P0, Q, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
+    [x_plus, P_plus, sigma, y_calc, innovation, S, innov_cov] = EFK(x0+delta_x0,P0,const,Q,Rtrue,ynoise,h);
+
     error_x = x_plus - xnoise;
 
     % testing NEES & NIS
@@ -225,7 +235,7 @@ Nnx = N*n;
 r1x = chi2inv(alphaNEES/2, Nnx)./N;
 r2x = chi2inv(1-alphaNEES/2, Nnx)./N;
 
-figure
+figure()
 plot(epsNEESbar,'ro','MarkerSize',6,'LineWidth',2),hold on
 plot(r1x*ones(size(epsNEESbar)),'r--','LineWidth',2)
 plot(r2x*ones(size(epsNEESbar)),'r--','LineWidth',2)
@@ -241,7 +251,7 @@ Nny = N*p;
 r1y = chi2inv(alphaNIS/2,Nny)./N;
 r2y = chi2inv(1-alphaNIS/2,Nny)./N;
 
-figure
+figure();
 plot(epsNISbar,'bo','MarkerSize',6,'LineWidth',2),hold on
 plot(r1y*ones(size(epsNISbar)),'b--','LineWidth',2)
 plot(r2y*ones(size(epsNISbar)),'b--','LineWidth',2)
@@ -316,7 +326,7 @@ function [x_plus, P_plus, sigma, y_plus, innovation, S, innov_cov] = EFK(x0,P0,c
     I = eye(length(x0));
     for i = 1:k
         % Prediction Step
-        time_dist = [0 const.deltaT];
+        time_dist = [const.deltaT*(k-1) const.deltaT*k];
         options = odeset('RelTol',1E-12,'AbsTol',1E-12);
         [t,X] = ode45(@(t,x) dubinsEOM(t,x,zeros(6,1),const),time_dist,x_plus(:,i),options); 
         x_minus = X(end,:)';
@@ -360,9 +370,10 @@ function [F,H] = findDTMatrices(x,const)
 end
 
 function [xnoise,ynoise] = TMTSim(t,x0,delta_x0,const,Qtrue,Rtrue,h,P0)
-    rng(100)
+    % rng(0)
     n = length(x0);
-    xnoise(:,1) = x0 + mvnrnd(delta_x0,P0)';
+    % xnoise(:,1) = x0 + mvnrnd(delta_x0,P0)';
+    xnoise(:,1) = mvnrnd(x0,P0)';
     p = 5;
     for i = 1: length(t)-1
         % Nonlinear Dynamics with perturbation + noise

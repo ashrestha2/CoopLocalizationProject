@@ -24,7 +24,9 @@ function [x_plus, P_plus, innovations, S, y_calc, F_matrices] = ekf(y_meas, x0, 
     % EKF Loop
     for k = 1:N
         % Prediction Step
-        x_pred = f(x_plus(:, k), u(:, k), dt); % Predict state
+        % x_pred = f(x_plus(:, k), u(:, k), dt); % Predict state
+        []
+
         F_k = F_func(x_plus(:, k), u(:, k), dt); % State transition Jacobian
         F_matrices(:, :, k) = F_k; % Store F_k for this step
         P_pred = F_k * P_plus(:, :, k) * F_k' + Q; % Predict covariance
