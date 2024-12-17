@@ -69,7 +69,7 @@ for i = 1: length(t)-1
     ynoise(:,i) = h(xnoise(:,i+1)) + v;
 end
 
-% Tuning 
+%% Tuning 
 P0 = diag([5, 5, pi/12, 10, 10, pi/12]);
 Q = 80*eye(6);
 
@@ -399,19 +399,26 @@ H_func = @(x) [
     0, 0, 0, 0, 1, 0
     ];
 
+% Nominal trajectories (w/o noise or perturbations)
+w = zeros(6,1);
+options = odeset('RelTol',1E-12,'AbsTol',1E-12);
+[tnom,xnom] = ode45(@(t,x) dubinsEOM(t,x,w,const),t,xnom0,options);
+ynom = calcY(xnom(2:end,:));
+
 load('cooplocalization_finalproj_KFdata.mat');
-P0 = diag([20,20,0.001,20,20,0.001]);
+P0 = diag([20,20,0.05,20,20,0.05]);
 Q = 10*P0;%diag([0.5,0.5,0.01,0.5,0.5,0.01]); % Process noise covariance
 P0e = diag([20, 20, pi/12, 10, 10, pi/12]);
-Q = 0.08*P0;
+Qekf = diag([5,5,0.1,5,5,0.1]);
 u = repmat([2; -pi/18; 12; pi/25], 1, 1000); % Constant control inputs
 
 [x_LKF, P_plus, sigma_LKF, y_plus, delta_y_minus, S, innov_cov] = LFK(delta_x0,P0,const,Q,Rtrue,xnom,ynom,ydata(:,2:end));
-[x_EKF, P_plus, innovation, Sk, y_plus, F_matrices] = ekf(ydata(:,2:end), x0, P0e, Qekf, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
+[x_EKF, P_plus, innovation, Sk, y_plus, F_matrices] = ekf(ydata(:,2:end), x0, P0e, Qekf, Rtrue, u, deltaT, 1000, f, h, F_func, H_func,const,@dubinsEOM);
+% [x_EKF, P_plus, sigma_EKF, y_plus, innovation, Sk, innov_cov] = EFK(x0,P0e,const,Qekf,Rtrue,ydata(:,2:end),h);
 
-for i = 1: length(t)
-    sigma_EKF(:,i) = sqrt(diag(P_plus(:,:,i)));
-end
+% for i = 1: length(t)
+%     sigma_EKF(:,i) = sqrt(diag(P_plus(:,:,i)));
+% end
 
 % Plot the results
 figure;
@@ -445,6 +452,49 @@ for i = 1:6
     title(['State ', num2str(i), ' Estimation using Ydata']);
 end
 
+% transform the states back into measurements
+y_EKF = calcY(x_EKF');
+y_LKF = calcY(x_LKF');
+
+var = {'$\gamma_{ag}$ [rads]','$\rho_{g}$ [m]','$\gamma_{ga}$ [rads]','$\xi_{a}$ [m]','$\eta_{a}$ [m]'};
+figure(); hold on;
+for i = 1:5
+    subplot(5,1,i); hold on;
+    if (i == 1 || i == 3)
+        plot(t,wrapToPi(y_LKF(i,:)),'b')
+        plot(t,wrapToPi(y_EKF(i,:)),'r')
+        plot(t(2:end),wrapToPi(ydata(i,2:end)),'k')
+    else
+        plot(t,y_LKF(i,:),'b')
+        plot(t,y_EKF(i,:),'r')
+        plot(t(2:end),ydata(i,2:end),'k')
+    end
+    ylabel(var{i},'Interpreter','latex')
+    if (i == 1)
+        legend('LKF', 'EKF','Ydata')
+    end
+end
+xlabel('Time (secs)','Interpreter','latex')
+sgtitle('Measurements vs Time using Ydata','Interpreter','latex')
+
+
+figure(); hold on;
+plot(xnom(:,2),xnom(:,1),'k',LineWidth=1.5)
+plot(x_EKF(2,:),x_EKF(1,:),'r')
+plot(x_LKF(2,:),x_LKF(1,:),'b')
+legend('Nominal', 'EKF', 'LKF')
+xlabel('East')
+ylabel('North')
+title('Ground Vehicle Trajectory')
+
+figure(); hold on;
+plot(xnom(:,5),xnom(:,4),'k')
+plot(x_EKF(5,:),x_EKF(4,:),'r')
+plot(x_LKF(5,:),x_LKF(4,:),'b')
+legend('Nominal', 'EKF', 'LKF')
+xlabel('East')
+ylabel('North')
+title('Air Vehicle Trajectory')
 
 %%
 function dx = dubinsEOM(t,x,w,const)
@@ -556,8 +606,8 @@ function [F,H] = findDTMatrices(x,const)
 end
 
 function [xnoise,ynoise] = TMTSim(t,x0,const,Qtrue,Rtrue,h)
-    rng(100)
-    xnoise(:,1) = x0;
+    % rng(100)
+    xnoise(:,1) = mvnrnd(x0,P0)';
     n = length(x0);
     p = 5;
     for i = 1: length(t)-1

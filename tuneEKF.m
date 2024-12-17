@@ -35,7 +35,7 @@ t = 0:deltaT:const.endTime;
 
 %% SIMULATION AND ERROR ANALYSIS OF TMT AND EKF 
 
-% rng(100) % Set initial seed for tuning
+rng(100) % Set initial seed for tuning
 
 %%%%%%%%%%% TUNING PARAMETERS %%%%%%%%%%%%%%%%%
 P0 = diag([20, 20, pi/12, 10, 10, pi/12]);
@@ -115,7 +115,8 @@ end
 
 %%% Simulate LKF and calculate error
 % [x_plus, P_plus, innovation, Sk, y_plus, F_matrices] = ekf(ynoise, x0, P0, Q, Rtrue, u, deltaT, 1000, f, h, F_func, H_func);
-[x_plus, P_plus, sigma, y_plus, innovation, Sk, innov_cov] = EFK(x0,P0,const,Q,Rtrue,ynoise,h);
+[x_plus, P_plus, innovation, Sk, y_plus, F_matrices] = ekf(ynoise, x0, P0, Q, Rtrue, u, deltaT, 1000, f, h, F_func, H_func,const,@dubinsEOM);
+% [x_plus, P_plus, sigma, y_plus, innovation, Sk, innov_cov] = EFK(x0,P0,const,Q,Rtrue,ynoise,h);
 
 error_x = x_plus - xnoise;
 
@@ -370,7 +371,7 @@ function [F,H] = findDTMatrices(x,const)
 end
 
 function [xnoise,ynoise] = TMTSim(t,x0,delta_x0,const,Qtrue,Rtrue,h,P0)
-    % rng(0)
+    rng(100)
     n = length(x0);
     % xnoise(:,1) = x0 + mvnrnd(delta_x0,P0)';
     xnoise(:,1) = mvnrnd(x0,P0)';
